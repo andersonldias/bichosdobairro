@@ -2,10 +2,10 @@
 
 Sistema completo para gerenciamento de petshops com frontend em React + Tailwind CSS e backend em Node.js + Express + MySQL.
 
-[![GitHub stars](https://img.shields.io/github/stars/seu-usuario/petshop-management?style=social)](https://github.com/seu-usuario/petshop-management)
-[![GitHub forks](https://img.shields.io/github/forks/seu-usuario/petshop-management?style=social)](https://github.com/seu-usuario/petshop-management)
-[![GitHub issues](https://img.shields.io/github/issues/seu-usuario/petshop-management)](https://github.com/seu-usuario/petshop-management/issues)
-[![GitHub license](https://img.shields.io/github/license/seu-usuario/petshop-management)](https://github.com/seu-usuario/petshop-management/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/andersonldias/bichosdobairro?style=social)](https://github.com/andersonldias/bichosdobairro)
+[![GitHub forks](https://img.shields.io/github/forks/andersonldias/bichosdobairro?style=social)](https://github.com/andersonldias/bichosdobairro)
+[![GitHub issues](https://img.shields.io/github/issues/andersonldias/bichosdobairro)](https://github.com/andersonldias/bichosdobairro/issues)
+[![GitHub license](https://img.shields.io/github/license/andersonldias/bichosdobairro)](https://github.com/andersonldias/bichosdobairro/blob/main/LICENSE)
 
 ## 📋 Funcionalidades
 
@@ -80,8 +80,8 @@ Projeto novo/
 
 ### 1. Clone o repositório
 ```bash
-git clone <url-do-repositorio>
-cd "Projeto novo"
+git clone https://github.com/andersonldias/bichosdobairro.git
+cd bichosdobairro
 ```
 
 ### 2. Configure o banco de dados
