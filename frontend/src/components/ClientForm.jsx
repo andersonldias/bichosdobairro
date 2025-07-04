@@ -86,7 +86,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
           {/* Informações Básicas */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Informações Básicas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nome Completo *
@@ -101,41 +101,41 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
                 )}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  CPF *
-                </label>
-                <input
-                  type="text"
-                  {...register('cpf', { 
-                    required: 'CPF é obrigatório',
-                    pattern: {
-                      value: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
-                      message: 'CPF deve estar no formato 000.000.000-00'
-                    }
-                  })}
-                  className="input-field"
-                  placeholder="000.000.000-00"
-                />
-                {errors.cpf && (
-                  <p className="text-red-600 text-sm mt-1">{errors.cpf.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefone *
-                </label>
-                <input
-                  type="text"
-                  {...register('phone', { required: 'Telefone é obrigatório' })}
-                  className="input-field"
-                  placeholder="(00) 00000-0000"
-                />
-                {errors.phone && (
-                  <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    CPF *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('cpf', { 
+                      required: 'CPF é obrigatório',
+                      pattern: {
+                        value: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
+                        message: 'CPF deve estar no formato 000.000.000-00'
+                      }
+                    })}
+                    className="input-field"
+                    placeholder="000.000.000-00"
+                  />
+                  {errors.cpf && (
+                    <p className="text-red-600 text-sm mt-1">{errors.cpf.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('phone', { required: 'Telefone é obrigatório' })}
+                    className="input-field"
+                    placeholder="(00) 00000-0000"
+                  />
+                  {errors.phone && (
+                    <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
