@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, MapPin, Loader2 } from 'lucide-react';
+import PetForm from './PetForm';
+import { usePets } from '../hooks/usePets';
 
 const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets } = usePets();
+  const [showPetForm, setShowPetForm] = useState(false);
+  const [editingPet, setEditingPet] = useState(null);
   
   const {
     register,
@@ -27,6 +32,9 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   });
 
   const cep = watch('cep');
+
+  // Filtrar pets do cliente atual
+  const clientPets = client ? pets.filter(p => p.client_id === client.id) : [];
 
   // Buscar endereço pelo CEP
   useEffect(() => {
@@ -63,6 +71,32 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddPet = () => {
+    setEditingPet(null);
+    setShowPetForm(true);
+  };
+
+  const handleEditPet = (pet) => {
+    setEditingPet(pet);
+    setShowPetForm(true);
+  };
+
+  const handleDeletePet = async (petId) => {
+    await deletePet(petId);
+    await loadPets();
+  };
+
+  const handlePetFormSubmit = async (petData) => {
+    if (editingPet) {
+      await updatePet(editingPet.id, { ...petData, client_id: client.id });
+    } else {
+      await createPet({ ...petData, client_id: client.id });
+    }
+    setShowPetForm(false);
+    setEditingPet(null);
+    await loadPets();
   };
 
   return (
@@ -255,6 +289,64 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
             </div>
           </div>
+
+          {/* Pets do Cliente */}
+          {client && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span className="mr-2">🐾</span> Pets do Cliente
+              </h3>
+              <div className="mb-4">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleAddPet}
+                  disabled={loadingPets}
+                >
+                  Adicionar Pet
+                </button>
+              </div>
+              {loadingPets ? (
+                <div className="text-gray-500">Carregando pets...</div>
+              ) : clientPets.length === 0 ? (
+                <div className="text-gray-500">Nenhum pet cadastrado para este cliente.</div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {clientPets.map((pet) => (
+                    <li key={pet.id} className="flex items-center justify-between py-2">
+                      <div>
+                        <span className="font-medium text-gray-900">{pet.name}</span>
+                        <span className="text-gray-500 ml-2">({pet.species} - {pet.breed})</span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          className="btn-secondary px-2 py-1"
+                          onClick={() => handleEditPet(pet)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-danger px-2 py-1"
+                          onClick={() => handleDeletePet(pet.id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {showPetForm && (
+                <PetForm
+                  pet={editingPet}
+                  onSubmit={handlePetFormSubmit}
+                  onCancel={() => { setShowPetForm(false); setEditingPet(null); }}
+                />
+              )}
+            </div>
+          )}
 
           {/* Botões */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
