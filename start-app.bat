@@ -1,28 +1,48 @@
 @echo off
 echo ========================================
-echo    GERENCIAMENTO DE PETSHOP
+echo    INICIANDO APLICACAO PETSHOP
 echo ========================================
 echo.
-echo Iniciando aplicacao...
-echo.
 
-REM Navegar para o diretório do projeto
-cd /d "C:\Users\Ander\Desktop\Projeto Loja\Projeto novo"
+REM Verificar se Node.js está instalado
+node --version >nul 2>&1
+if errorlevel 1 (
+    echo ERRO: Node.js nao encontrado!
+    echo Instale o Node.js em: https://nodejs.org/
+    pause
+    exit /b 1
+)
 
-REM Iniciar o backend em uma nova janela
-echo [1/3] Iniciando Backend...
-start "Backend - Petshop" cmd /k "cd backend && npm start"
+REM Verificar se as dependências estão instaladas
+if not exist "backend\node_modules" (
+    echo [1/4] Instalando dependencias do Backend...
+    cd backend
+    npm install
+    cd ..
+)
+
+if not exist "frontend\node_modules" (
+    echo [2/4] Instalando dependencias do Frontend...
+    cd frontend
+    npm install
+    cd ..
+)
+
+REM Iniciar o backend em background
+echo [3/4] Iniciando Backend...
+start /min "" cmd /c "cd backend && npm start"
 
 REM Aguardar 3 segundos para o backend inicializar
+echo [4/4] Aguardando servidores inicializarem...
 timeout /t 3 /nobreak >nul
 
-REM Iniciar o frontend em uma nova janela
-echo [2/3] Iniciando Frontend...
-start "Frontend - Petshop" cmd /k "cd frontend && npm run dev"
+REM Iniciar o frontend em background
+echo Iniciando Frontend...
+start /min "" cmd /c "cd frontend && npm run dev"
 
-REM Aguardar 8 segundos para ambos os servidores inicializarem
-echo [3/3] Aguardando servidores inicializarem...
-timeout /t 8 /nobreak >nul
+REM Aguardar mais 5 segundos para o frontend inicializar
+echo Aguardando frontend inicializar...
+timeout /t 5 /nobreak >nul
 
 REM Abrir o navegador
 echo Abrindo navegador...
@@ -36,5 +56,11 @@ echo.
 echo Backend:  http://localhost:3001
 echo Frontend: http://localhost:5173
 echo.
-echo Pressione qualquer tecla para sair...
-pause >nul 
+echo As janelas dos servidores estao rodando em background.
+echo Para parar os servidores, feche as janelas do CMD.
+echo.
+echo Pressione qualquer tecla para fechar esta janela...
+pause >nul
+
+REM Fechar esta janela automaticamente
+exit 

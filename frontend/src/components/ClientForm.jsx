@@ -3,6 +3,24 @@ import { useForm } from 'react-hook-form';
 import { X, MapPin, Loader2 } from 'lucide-react';
 import PetForm from './PetForm';
 import { usePets } from '../hooks/usePets';
+import axios from 'axios';
+
+function formatCPF(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+}
+
+function formatPhone(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15);
+}
 
 const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -10,7 +28,10 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets } = usePets();
   const [showPetForm, setShowPetForm] = useState(false);
   const [editingPet, setEditingPet] = useState(null);
-  
+  const [duplicateName, setDuplicateName] = useState(null);
+  const [duplicateCpf, setDuplicateCpf] = useState(null);
+  const [duplicatePhone, setDuplicatePhone] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -89,14 +110,44 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   };
 
   const handlePetFormSubmit = async (petData) => {
-    if (editingPet) {
-      await updatePet(editingPet.id, { ...petData, client_id: client.id });
-    } else {
-      await createPet({ ...petData, client_id: client.id });
+      if (editingPet) {
+        await updatePet(editingPet.id, { ...petData, client_id: client.id });
+      } else {
+        await createPet({ ...petData, client_id: client.id });
     }
     setShowPetForm(false);
     setEditingPet(null);
     await loadPets();
+  };
+
+  async function checkDuplicate(field, value) {
+    if (!value) return;
+    try {
+      const res = await axios.post('/api/clients/check-duplicate-field', { field, value });
+      console.log('Resposta duplicidade', field, value, res.data);
+      if (field === 'name') setDuplicateName(res.data.duplicate ? res.data.client : null);
+      if (field === 'cpf') setDuplicateCpf(res.data.duplicate ? res.data.client : null);
+      if (field === 'phone') setDuplicatePhone(res.data.duplicate ? res.data.client : null);
+    } catch (e) {
+      console.error('Erro ao checar duplicidade', field, value, e);
+    }
+  }
+
+  const [formValues, setFormValues] = useState({
+    cpf: client?.cpf || '',
+    phone: client?.phone || ''
+  });
+
+  const handleCpfChange = (e) => {
+    const formatted = formatCPF(e.target.value);
+    setFormValues((prev) => ({ ...prev, cpf: formatted }));
+    setValue('cpf', formatted);
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhone(e.target.value);
+    setFormValues((prev) => ({ ...prev, phone: formatted }));
+    setValue('phone', formatted);
   };
 
   return (
@@ -130,9 +181,13 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   {...register('name', { required: 'Nome é obrigatório' })}
                   className="input-field"
                   placeholder="Digite o nome completo"
+                  onBlur={e => checkDuplicate('name', e.target.value)}
                 />
                 {errors.name && (
                   <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+                )}
+                {duplicateName && (
+                  <p className="text-red-600 text-sm mt-1">Já existe um cliente com este nome!</p>
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,9 +206,15 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                     })}
                     className="input-field"
                     placeholder="000.000.000-00"
+                    value={formValues.cpf}
+                    onChange={handleCpfChange}
+                    onBlur={e => checkDuplicate('cpf', e.target.value.replace(/\D/g, ''))}
                   />
                   {errors.cpf && (
                     <p className="text-red-600 text-sm mt-1">{errors.cpf.message}</p>
+                  )}
+                  {duplicateCpf && (
+                    <p className="text-red-600 text-sm mt-1">Já existe um cliente com este CPF!</p>
                   )}
                 </div>
                 <div>
@@ -165,9 +226,15 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                     {...register('phone', { required: 'Telefone é obrigatório' })}
                     className="input-field"
                     placeholder="(00) 00000-0000"
+                    value={formValues.phone}
+                    onChange={handlePhoneChange}
+                    onBlur={e => checkDuplicate('phone', e.target.value)}
                   />
                   {errors.phone && (
                     <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
+                  )}
+                  {duplicatePhone && (
+                    <p className="text-red-600 text-sm mt-1">Já existe um cliente com este telefone!</p>
                   )}
                 </div>
               </div>
@@ -292,20 +359,20 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
 
           {/* Pets do Cliente */}
           {client && (
-            <div>
+          <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                 <span className="mr-2">🐾</span> Pets do Cliente
               </h3>
               <div className="mb-4">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleAddPet}
-                  disabled={loadingPets}
-                >
-                  Adicionar Pet
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleAddPet}
+                disabled={loadingPets}
+              >
+                Adicionar Pet
+              </button>
+            </div>
               {loadingPets ? (
                 <div className="text-gray-500">Carregando pets...</div>
               ) : clientPets.length === 0 ? (
@@ -345,7 +412,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   onCancel={() => { setShowPetForm(false); setEditingPet(null); }}
                 />
               )}
-            </div>
+          </div>
           )}
 
           {/* Botões */}
