@@ -1,4 +1,5 @@
 const Client = require('../models/Client');
+const db = require('../config/database');
 
 class ClientController {
   // Listar todos os clientes
@@ -57,12 +58,13 @@ class ClientController {
         });
       }
       
-      // Verificar se CPF já existe
-      const existingClient = await Client.findByCpf(clientData.cpf);
-      if (existingClient) {
+      // Verificar duplicidade
+      const duplicate = await Client.findDuplicate(clientData);
+      if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: 'CPF já cadastrado'
+          message: 'Já existe um cliente com o mesmo Nome, CPF ou Telefone',
+          duplicate
         });
       }
       
@@ -95,12 +97,13 @@ class ClientController {
         });
       }
       
-      // Verificar se CPF já existe em outro cliente
-      const existingClient = await Client.findByCpf(clientData.cpf);
-      if (existingClient && existingClient.id != id) {
+      // Verificar duplicidade (exceto o próprio)
+      const duplicate = await Client.findDuplicate(clientData, id);
+      if (duplicate) {
         return res.status(400).json({
           success: false,
-          message: 'CPF já cadastrado para outro cliente'
+          message: 'Já existe um cliente com o mesmo Nome, CPF ou Telefone',
+          duplicate
         });
       }
       
@@ -179,6 +182,37 @@ class ClientController {
         success: false,
         message: error.message
       });
+    }
+  }
+
+  // Checar duplicidade de campo individual
+  static async checkDuplicateField(req, res) {
+    try {
+      const { field, value } = req.body;
+      if (!field || !value) {
+        return res.status(400).json({ success: false, message: 'Campo e valor são obrigatórios' });
+      }
+      let query = '';
+      let param = value;
+      if (field === 'name') {
+        query = 'SELECT * FROM clients WHERE LOWER(name) = LOWER(?)';
+      } else if (field === 'cpf') {
+        param = value.replace(/[^0-9]/g, '');
+        query = 'SELECT * FROM clients WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(cpf, ".", ""), "-", ""), "/", ""), " ", ""), "_", ""), ",", "") = ?';
+      } else if (field === 'phone') {
+        param = value.replace(/[^0-9]/g, '');
+        query = 'SELECT * FROM clients WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, "(", ""), ")", ""), "-", ""), " ", "") = ?';
+      } else {
+        return res.status(400).json({ success: false, message: 'Campo inválido' });
+      }
+      const [rows] = await db.query(query, [param]);
+      if (rows.length > 0) {
+        return res.json({ duplicate: true, client: rows[0] });
+      }
+      return res.json({ duplicate: false });
+    } catch (error) {
+      console.error('Erro em checkDuplicateField:', error);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 }

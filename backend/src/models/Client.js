@@ -144,6 +144,24 @@ class Client {
       return { total_clients: 0, new_today: 0, days_with_new_clients: 0 };
     }
   }
+
+  static async findDuplicate({ name, cpf, phone }, excludeId = null) {
+    // Normalizar os campos
+    const cleanCpf = cpf ? cpf.replace(/[^0-9]/g, '') : '';
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+    let query = `SELECT * FROM clients WHERE (
+      LOWER(name) = LOWER(?)
+      OR REPLACE(REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = ?
+      OR REPLACE(REPLACE(REPLACE(REPLACE(phone, '(', ''), ')', ''), '-', ''), ' ', '') = ?
+    )`;
+    const params = [name, cleanCpf, cleanPhone];
+    if (excludeId) {
+      query += ' AND id != ?';
+      params.push(excludeId);
+    }
+    const [rows] = await db.query(query, params);
+    return rows[0] || null;
+  }
 }
 
 module.exports = Client; 

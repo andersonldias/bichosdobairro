@@ -11,5 +11,6 @@ router.post('/', ClientController.store);
 router.get('/:id', ClientController.show);
 router.put('/:id', ClientController.update);
 router.delete('/:id', ClientController.destroy);
+router.post('/check-duplicate-field', ClientController.checkDuplicateField);
 
 module.exports = router; 
