@@ -259,7 +259,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
         </div>
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
+        <form id="client-form" onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Informações Básicas</h3>
@@ -531,6 +531,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             {showPetForm && (
               <div className="mb-4">
                 <PetForm
+                  key={petFormResetKey}
                   pet={editingPet || {}}
                   onSubmit={petData => {
                     handlePetFormSubmit(petData, { keepOpen: true });
@@ -551,23 +552,44 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               type="button"
               className="btn-primary"
               onClick={async () => {
-                if (showPetForm) {
-                  // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
-                  const petForm = document.querySelector('form[data-pet-form]');
-                  if (petForm) {
-                    const formData = new FormData(petForm);
-                    const petData = {
-                      name: formData.get('name'),
-                      species: formData.get('species'),
-                      breed: formData.get('breed'),
-                      color: formData.get('color'),
-                      gender: formData.get('gender'),
-                      birthdate: formData.get('birthdate'),
-                      notes: formData.get('notes')
-                    };
-                    handlePetFormSubmit(petData, { keepOpen: true });
+                try {
+                  if (showPetForm) {
+                    // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
+                    const petForm = document.querySelector('form[data-pet-form]');
+                    if (petForm) {
+                      const formData = new FormData(petForm);
+                      const petData = {
+                        name: formData.get('name'),
+                        species: formData.get('species'),
+                        breed: formData.get('breed'),
+                        color: formData.get('color'),
+                        gender: formData.get('gender'),
+                        birthdate: formData.get('birthdate'),
+                        notes: formData.get('notes')
+                      };
+                      // Só adiciona se tiver pelo menos nome e espécie
+                      if (petData.name && petData.species) {
+                        handlePetFormSubmit(petData, { keepOpen: true });
+                      } else {
+                        // Se não tem dados válidos, apenas abre um novo formulário
+                        setEditingPet(null);
+                        setShowPetForm(true);
+                        setPetFormResetKey(prev => prev + 1);
+                      }
+                    } else {
+                      // Se não encontrar o formulário, apenas abre um novo
+                      setEditingPet(null);
+                      setShowPetForm(true);
+                      setPetFormResetKey(prev => prev + 1);
+                    }
+                  } else {
+                    setEditingPet(null);
+                    setShowPetForm(true);
+                    setPetFormResetKey(prev => prev + 1);
                   }
-                } else {
+                } catch (error) {
+                  console.error('Erro ao adicionar pet:', error);
+                  // Em caso de erro, abre um novo formulário
                   setEditingPet(null);
                   setShowPetForm(true);
                   setPetFormResetKey(prev => prev + 1);
@@ -591,25 +613,56 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             className="btn-primary flex items-center"
             disabled={loading}
             onClick={async () => {
-              // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
-              if (showPetForm) {
-                const petForm = document.querySelector('form[data-pet-form]');
-                if (petForm) {
-                  const formData = new FormData(petForm);
-                  const petData = {
-                    name: formData.get('name'),
-                    species: formData.get('species'),
-                    breed: formData.get('breed'),
-                    color: formData.get('color'),
-                    gender: formData.get('gender'),
-                    birthdate: formData.get('birthdate'),
-                    notes: formData.get('notes')
-                  };
-                  handlePetFormSubmit(petData, { keepOpen: false });
+              try {
+                // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
+                if (showPetForm) {
+                  const petForm = document.querySelector('form[data-pet-form]');
+                  if (petForm) {
+                    const formData = new FormData(petForm);
+                    const petData = {
+                      name: formData.get('name'),
+                      species: formData.get('species'),
+                      breed: formData.get('breed'),
+                      color: formData.get('color'),
+                      gender: formData.get('gender'),
+                      birthdate: formData.get('birthdate'),
+                      notes: formData.get('notes')
+                    };
+                    // Só adiciona se tiver pelo menos nome e espécie
+                    if (petData.name && petData.species) {
+                      handlePetFormSubmit(petData, { keepOpen: false });
+                    }
+                  }
                 }
+                
+                // Agora salva o cliente e todos os pets
+                const clientForm = document.getElementById('client-form');
+                if (clientForm) {
+                  clientForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                } else {
+                  // Fallback: chama diretamente o handleFormSubmit
+                  const form = document.querySelector('form');
+                  if (form) {
+                    const formData = new FormData(form);
+                    const clientData = {
+                      name: formData.get('name'),
+                      phone: formData.get('phone'),
+                      cpf: formData.get('cpf'),
+                      address: {
+                        street: formData.get('street'),
+                        number: formData.get('number'),
+                        neighborhood: formData.get('neighborhood'),
+                        city: formData.get('city'),
+                        state: formData.get('state'),
+                        cep: formData.get('cep')
+                      }
+                    };
+                    handleFormSubmit(clientData);
+                  }
+                }
+              } catch (error) {
+                console.error('Erro ao cadastrar:', error);
               }
-              // Agora salva o cliente e todos os pets
-              document.getElementById('client-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
             }}
           >
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
