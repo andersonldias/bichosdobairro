@@ -33,10 +33,14 @@ app.get('/', (req, res) => {
 // Importar rotas
 const clientRoutes = require('./routes/clients');
 const petRoutes = require('./routes/pets');
+const serviceTypeRoutes = require('./routes/serviceTypes');
+const appointmentRoutes = require('./routes/appointments');
 
 // Rotas da API
 app.use('/api/clients', clientRoutes);
 app.use('/api/pets', petRoutes);
+app.use('/api/service-types', serviceTypeRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {

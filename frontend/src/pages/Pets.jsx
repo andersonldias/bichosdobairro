@@ -14,6 +14,12 @@ const Pets = () => {
   const [filterSpecies, setFilterSpecies] = useState('');
   const [filterBreed, setFilterBreed] = useState('');
   const [filterClient, setFilterClient] = useState('');
+  const [showSpeciesFilter, setShowSpeciesFilter] = useState(false);
+  const [showBreedFilter, setShowBreedFilter] = useState(false);
+  const [showClientFilter, setShowClientFilter] = useState(false);
+  const [selectedSpeciesFilterIndex, setSelectedSpeciesFilterIndex] = useState(-1);
+  const [selectedBreedFilterIndex, setSelectedBreedFilterIndex] = useState(-1);
+  const [selectedClientFilterIndex, setSelectedClientFilterIndex] = useState(-1);
 
   // Filtro avançado local
   const filteredPets = pets.filter((pet) => {
@@ -28,6 +34,106 @@ const Pets = () => {
     const query = e.target.value;
     setSearchQuery(query);
     searchPets(query);
+  };
+
+  // Handlers para navegação por teclado nos filtros
+  const handleSpeciesFilterKeyDown = (e) => {
+    if (!showSpeciesFilter || species.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedSpeciesFilterIndex(prev =>
+          prev < species.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedSpeciesFilterIndex(prev =>
+          prev > 0 ? prev - 1 : species.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedSpeciesFilterIndex >= 0 && selectedSpeciesFilterIndex < species.length) {
+          const selectedSpecies = species[selectedSpeciesFilterIndex];
+          setFilterSpecies(selectedSpecies);
+          setShowSpeciesFilter(false);
+          setSelectedSpeciesFilterIndex(-1);
+          console.log('✅ Filtro de espécie selecionado via teclado:', selectedSpecies);
+        }
+        break;
+      case 'Escape':
+        setShowSpeciesFilter(false);
+        setSelectedSpeciesFilterIndex(-1);
+        break;
+    }
+  };
+
+  const handleBreedFilterKeyDown = (e) => {
+    if (!showBreedFilter || breeds.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedBreedFilterIndex(prev =>
+          prev < breeds.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedBreedFilterIndex(prev =>
+          prev > 0 ? prev - 1 : breeds.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedBreedFilterIndex >= 0 && selectedBreedFilterIndex < breeds.length) {
+          const selectedBreed = breeds[selectedBreedFilterIndex];
+          setFilterBreed(selectedBreed);
+          setShowBreedFilter(false);
+          setSelectedBreedFilterIndex(-1);
+          console.log('✅ Filtro de raça selecionado via teclado:', selectedBreed);
+        }
+        break;
+      case 'Escape':
+        setShowBreedFilter(false);
+        setSelectedBreedFilterIndex(-1);
+        break;
+    }
+  };
+
+  const handleClientFilterKeyDown = (e) => {
+    if (!showClientFilter || clients.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedClientFilterIndex(prev =>
+          prev < clients.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedClientFilterIndex(prev =>
+          prev > 0 ? prev - 1 : clients.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedClientFilterIndex >= 0 && selectedClientFilterIndex < clients.length) {
+          const selectedClient = clients[selectedClientFilterIndex];
+          setFilterClient(selectedClient.id);
+          setShowClientFilter(false);
+          setSelectedClientFilterIndex(-1);
+          console.log('✅ Filtro de cliente selecionado via teclado:', selectedClient.name);
+        }
+        break;
+      case 'Escape':
+        setShowClientFilter(false);
+        setSelectedClientFilterIndex(-1);
+        break;
+    }
   };
 
   const handleEdit = (pet) => {
@@ -134,44 +240,142 @@ const Pets = () => {
 
       {/* Filtros Avançados */}
       <div className="card flex flex-col md:flex-row md:items-end gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Espécie</label>
-          <select
-            className="input-field"
+        <div className="flex-1 relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Espécie
+          </label>
+          <input
+            type="text"
+            placeholder="Filtrar por espécie..."
             value={filterSpecies}
-            onChange={e => setFilterSpecies(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {species.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Raça</label>
-          <select
+            onChange={(e) => {
+              setFilterSpecies(e.target.value);
+              setShowSpeciesFilter(true);
+              setSelectedSpeciesFilterIndex(-1);
+            }}
+            onKeyDown={handleSpeciesFilterKeyDown}
+            onFocus={() => {
+              setShowSpeciesFilter(true);
+              setSelectedSpeciesFilterIndex(-1);
+            }}
+            onBlur={() => setTimeout(() => setShowSpeciesFilter(false), 150)}
             className="input-field"
+            autoComplete="off"
+          />
+          {showSpeciesFilter && species.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {species.map((s, index) => (
+                <div
+                  key={s}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    index === selectedSpeciesFilterIndex ? 'bg-blue-100 text-blue-900' : ''
+                  }`}
+                  onClick={() => {
+                    setFilterSpecies(s);
+                    setShowSpeciesFilter(false);
+                    setSelectedSpeciesFilterIndex(-1);
+                  }}
+                >
+                  {s}
+                  {index === selectedSpeciesFilterIndex && (
+                    <span className="ml-2 text-blue-600">← Selecionado</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Raça
+          </label>
+          <input
+            type="text"
+            placeholder="Filtrar por raça..."
             value={filterBreed}
-            onChange={e => setFilterBreed(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {breeds.map(b => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Dono</label>
-          <select
+            onChange={(e) => {
+              setFilterBreed(e.target.value);
+              setShowBreedFilter(true);
+              setSelectedBreedFilterIndex(-1);
+            }}
+            onKeyDown={handleBreedFilterKeyDown}
+            onFocus={() => {
+              setShowBreedFilter(true);
+              setSelectedBreedFilterIndex(-1);
+            }}
+            onBlur={() => setTimeout(() => setShowBreedFilter(false), 150)}
             className="input-field"
-            value={filterClient}
-            onChange={e => setFilterClient(e.target.value)}
-          >
-            <option value="">Todos</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            autoComplete="off"
+          />
+          {showBreedFilter && breeds.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {breeds.map((b, index) => (
+                <div
+                  key={b}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    index === selectedBreedFilterIndex ? 'bg-blue-100 text-blue-900' : ''
+                  }`}
+                  onClick={() => {
+                    setFilterBreed(b);
+                    setShowBreedFilter(false);
+                    setSelectedBreedFilterIndex(-1);
+                  }}
+                >
+                  {b}
+                  {index === selectedBreedFilterIndex && (
+                    <span className="ml-2 text-blue-600">← Selecionado</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Dono
+          </label>
+          <input
+            type="text"
+            placeholder="Filtrar por dono..."
+            value={clients.find(c => c.id == filterClient)?.name || ''}
+            onChange={(e) => {
+              const clientName = e.target.value;
+              const client = clients.find(c => c.name.toLowerCase().includes(clientName.toLowerCase()));
+              setFilterClient(client ? client.id : '');
+              setShowClientFilter(true);
+              setSelectedClientFilterIndex(-1);
+            }}
+            onKeyDown={handleClientFilterKeyDown}
+            onFocus={() => {
+              setShowClientFilter(true);
+              setSelectedClientFilterIndex(-1);
+            }}
+            onBlur={() => setTimeout(() => setShowClientFilter(false), 150)}
+            className="input-field"
+            autoComplete="off"
+          />
+          {showClientFilter && clients.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {clients.map((c, index) => (
+                <div
+                  key={c.id}
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                    index === selectedClientFilterIndex ? 'bg-blue-100 text-blue-900' : ''
+                  }`}
+                  onClick={() => {
+                    setFilterClient(c.id);
+                    setShowClientFilter(false);
+                    setSelectedClientFilterIndex(-1);
+                  }}
+                >
+                  {c.name}
+                  {index === selectedClientFilterIndex && (
+                    <span className="ml-2 text-blue-600">← Selecionado</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

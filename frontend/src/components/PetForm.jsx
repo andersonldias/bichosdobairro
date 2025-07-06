@@ -196,7 +196,6 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Espécie
-            <span className="text-xs text-gray-500 ml-1">(Use ↑↓ para navegar, Enter para selecionar)</span>
           </label>
           <input
             type="text"
@@ -251,7 +250,6 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Raça
-            <span className="text-xs text-gray-500 ml-1">(Use ↑↓ para navegar, Enter para selecionar)</span>
           </label>
           <input
             type="text"
