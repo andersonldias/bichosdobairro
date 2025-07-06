@@ -89,6 +89,28 @@ const Agenda = () => {
     });
   };
 
+  // Função para obter agendamentos do ano
+  const getAppointmentsForYear = () => {
+    const year = currentDate.getFullYear();
+    return appointments.filter(apt => {
+      const aptDate = new Date(apt.appointment_date);
+      return aptDate.getFullYear() === year;
+    });
+  };
+
+  // Função para agrupar por mês
+  const getYearSummary = () => {
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      month: i,
+      total: 0
+    }));
+    getAppointmentsForYear().forEach(apt => {
+      const aptDate = new Date(apt.appointment_date);
+      months[aptDate.getMonth()].total++;
+    });
+    return months;
+  };
+
   // Filtrar agendamentos
   const filteredAppointments = appointments.filter(apt => {
     const matchesSearch = !searchQuery || 
@@ -175,22 +197,22 @@ const Agenda = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setViewMode('day')}
+            className={`px-3 py-1 rounded ${viewMode === 'day' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
+          >
+            Dia
+          </button>
+          <button
             onClick={() => setViewMode('month')}
             className={`px-3 py-1 rounded ${viewMode === 'month' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
           >
             Mês
           </button>
           <button
-            onClick={() => setViewMode('week')}
-            className={`px-3 py-1 rounded ${viewMode === 'week' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
+            onClick={() => setViewMode('year')}
+            className={`px-3 py-1 rounded ${viewMode === 'year' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
           >
-            Semana
-          </button>
-          <button
-            onClick={() => setViewMode('day')}
-            className={`px-3 py-1 rounded ${viewMode === 'day' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
-          >
-            Dia
+            Ano
           </button>
         </div>
       </div>
@@ -267,208 +289,279 @@ const Agenda = () => {
         </div>
       </div>
 
-      {/* Calendário */}
-      <div className="card max-w-4xl mx-auto">
-        {/* Navegação do calendário */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-lg font-semibold">
-            {currentDate.toLocaleDateString('pt-BR', { 
-              month: 'long', 
-              year: 'numeric' 
-            })}
-          </h2>
-          <button
-            onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Grid do calendário */}
-        <div className="grid grid-cols-7 gap-1">
-          {/* Cabeçalho dos dias da semana */}
-          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-            <div key={day} className="p-2 text-center font-medium text-gray-600 text-sm">
-              {day}
-            </div>
-          ))}
-
-          {/* Dias do calendário */}
-          {calendarDays.map((day, index) => {
-            const dayAppointments = getAppointmentsForDate(day);
-            const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-            const isToday = day.toDateString() === new Date().toDateString();
-            const isSelected = day.toDateString() === selectedDate.toDateString();
-
-            return (
-              <div
-                key={index}
-                onClick={() => handleDateSelect(day)}
-                className={`
-                  min-h-[100px] p-2 border border-gray-200 cursor-pointer transition-colors
-                  ${isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}
-                  ${isToday ? 'bg-blue-50 border-blue-300' : ''}
-                  ${isSelected ? 'bg-blue-100 border-blue-400' : ''}
-                  hover:bg-gray-50
-                `}
+      {/* Visualização condicional */}
+      {viewMode === 'month' && (
+        <>
+          {/* Calendário mensal */}
+          <div className="card max-w-4xl mx-auto">
+            {/* Navegação do calendário */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => navigateMonth(-1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <div className="text-sm font-medium mb-1">
-                  {day.getDate()}
-                </div>
-                
-                {/* Agendamentos do dia */}
-                <div className="space-y-1">
-                  {dayAppointments.slice(0, 3).map((apt, aptIndex) => (
-                    <div
-                      key={apt.id}
-                      className={`
-                        text-xs p-1 rounded truncate cursor-pointer
-                        ${getStatusColor(apt.status)}
-                      `}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedAppointment(apt);
-                        setShowAppointmentModal(true);
-                      }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <PawPrint className="w-3 h-3" />
-                        <span className="truncate">{apt.pet_name}</span>
-                      </div>
-                      <div className="text-xs opacity-75 truncate">
-                        {apt.service_name}
-                      </div>
-                    </div>
-                  ))}
-                  {dayAppointments.length > 3 && (
-                    <div className="text-xs text-gray-500 text-center">
-                      +{dayAppointments.length - 3} mais
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-semibold">
+                {currentDate.toLocaleDateString('pt-BR', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </h2>
+              <button
+                onClick={() => navigateMonth(1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
 
-      {/* Lista de Agendamentos */}
-      <div className="card max-w-4xl mx-auto">
-        <h3 className="text-lg font-semibold mb-4">
-          Agendamentos - {formatDate(selectedDate)}
-        </h3>
+            {/* Grid do calendário */}
+            <div className="grid grid-cols-7 gap-1">
+              {/* Cabeçalho dos dias da semana */}
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                <div key={day} className="p-2 text-center font-medium text-gray-600 text-sm">
+                  {day}
+                </div>
+              ))}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-              <span className="text-red-800">{error}</span>
+              {/* Dias do calendário */}
+              {calendarDays.map((day, index) => {
+                const dayAppointments = getAppointmentsForDate(day);
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                const isToday = day.toDateString() === new Date().toDateString();
+                const isSelected = day.toDateString() === selectedDate.toDateString();
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => handleDateSelect(day)}
+                    className={`
+                      min-h-[100px] p-2 border border-gray-200 cursor-pointer transition-colors
+                      ${isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}
+                      ${isToday ? 'bg-blue-50 border-blue-300' : ''}
+                      ${isSelected ? 'bg-blue-100 border-blue-400' : ''}
+                      hover:bg-gray-50
+                    `}
+                  >
+                    <div className="text-sm font-medium mb-1">
+                      {day.getDate()}
+                    </div>
+                    
+                    {/* Agendamentos do dia */}
+                    <div className="space-y-1">
+                      {dayAppointments.slice(0, 3).map((apt, aptIndex) => (
+                        <div
+                          key={apt.id}
+                          className={`
+                            text-xs p-1 rounded truncate cursor-pointer
+                            ${getStatusColor(apt.status)}
+                          `}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment(apt);
+                            setShowAppointmentModal(true);
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <PawPrint className="w-3 h-3" />
+                            <span className="truncate">{apt.pet_name}</span>
+                          </div>
+                          <div className="text-xs opacity-75 truncate">
+                            {apt.service_name}
+                          </div>
+                        </div>
+                      ))}
+                      {dayAppointments.length > 3 && (
+                        <div className="text-xs text-gray-500 text-center">
+                          +{dayAppointments.length - 3} mais
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-            <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
-          </div>
-        ) : filteredAppointments.length === 0 ? (
-          <div className="text-center py-8">
-            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum agendamento encontrado
-            </h3>
-            <p className="text-gray-500">
-              {searchQuery || filterStatus !== 'all' 
-                ? 'Tente ajustar os filtros de busca'
-                : 'Não há agendamentos para esta data'
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredAppointments.map((apt) => (
-              <div
-                key={apt.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <PawPrint className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium">{apt.client_name}</span>
-                      <span className="text-gray-500">•</span>
-                      <PawPrint className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium">{apt.pet_name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">
-                        {formatDate(new Date(apt.appointment_date))} às {formatTime(apt.appointment_time)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">{apt.service_name}</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        R$ {parseFloat(apt.total_price || 0).toFixed(2)}
-                      </span>
-                    </div>
+        </>
+      )}
+      {viewMode === 'day' && (
+        <div className="card max-w-4xl mx-auto">
+          <h3 className="text-lg font-semibold mb-4">
+            Agendamentos do dia {formatDate(selectedDate)}
+          </h3>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+              <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
+            </div>
+          ) : getAppointmentsForDate(selectedDate).length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhum agendamento encontrado
+              </h3>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {getAppointmentsForDate(selectedDate).map((apt) => (
+                <div key={apt.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">{apt.client_name}</span>
+                    <span className="text-gray-500">•</span>
+                    <PawPrint className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">{apt.pet_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-600">
+                      {formatDate(new Date(apt.appointment_date))} às {formatTime(apt.appointment_time)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
-                      {getStatusText(apt.status)}
+                    <span className="text-sm text-gray-600">{apt.service_name}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      R$ {parseFloat(apt.total_price || 0).toFixed(2)}
                     </span>
-                    <div className="flex gap-1">
-                      {apt.status === 'agendado' && (
-                        <button
-                          onClick={() => updateAppointmentStatus(apt.id, 'em_andamento')}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                          title="Iniciar"
-                        >
-                          <Play className="w-4 h-4" />
-                        </button>
-                      )}
-                      {apt.status === 'em_andamento' && (
-                        <button
-                          onClick={() => updateAppointmentStatus(apt.id, 'concluido')}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                          title="Concluir"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          setSelectedAppointment(apt);
-                          setShowAppointmentModal(true);
-                        }}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteAppointment(apt.id)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {viewMode === 'year' && (
+        <div className="card max-w-4xl mx-auto">
+          <h3 className="text-lg font-semibold mb-4">
+            Resumo do ano de {currentDate.getFullYear()}
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {getYearSummary().map((m, i) => (
+              <div key={i} className="p-4 border rounded-lg text-center">
+                <div className="text-lg font-bold text-blue-700">
+                  {new Date(0, m.month).toLocaleString('pt-BR', { month: 'long' })}
+                </div>
+                <div className="text-2xl font-bold">{m.total}</div>
+                <div className="text-gray-500 text-sm">agendamentos</div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Lista de Agendamentos */}
+      {viewMode === 'month' && (
+        <div className="card max-w-4xl mx-auto">
+          <h3 className="text-lg font-semibold mb-4">
+            Agendamentos - {formatDate(selectedDate)}
+          </h3>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
+                <span className="text-red-800">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+              <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhum agendamento encontrado
+              </h3>
+              <p className="text-gray-500">
+                {searchQuery || filterStatus !== 'all' 
+                  ? 'Tente ajustar os filtros de busca'
+                  : 'Não há agendamentos para esta data'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAppointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <PawPrint className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium">{apt.client_name}</span>
+                        <span className="text-gray-500">•</span>
+                        <PawPrint className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium">{apt.pet_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">
+                          {formatDate(new Date(apt.appointment_date))} às {formatTime(apt.appointment_time)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{apt.service_name}</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          R$ {parseFloat(apt.total_price || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
+                        {getStatusText(apt.status)}
+                      </span>
+                      <div className="flex gap-1">
+                        {apt.status === 'agendado' && (
+                          <button
+                            onClick={() => updateAppointmentStatus(apt.id, 'em_andamento')}
+                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            title="Iniciar"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                        )}
+                        {apt.status === 'em_andamento' && (
+                          <button
+                            onClick={() => updateAppointmentStatus(apt.id, 'concluido')}
+                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            title="Concluir"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedAppointment(apt);
+                            setShowAppointmentModal(true);
+                          }}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Editar"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteAppointment(apt.id)}
+                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal de Detalhes do Agendamento */}
       {showAppointmentModal && selectedAppointment && (

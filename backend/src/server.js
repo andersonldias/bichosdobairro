@@ -7,7 +7,12 @@ const PORT = process.env.PORT || 3001;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://192.168.15.15:5173',
+    'capacitor://localhost',
+    'http://localhost'
+  ],
   credentials: true
 }));
 
@@ -69,10 +74,11 @@ app.use('*', (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📱 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`🌐 URL Local: http://localhost:${PORT}`);
+  console.log(`🌐 URL Rede: http://192.168.15.15:${PORT}`);
 });
 
 module.exports = app; 

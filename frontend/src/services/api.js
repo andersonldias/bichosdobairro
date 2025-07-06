@@ -1,8 +1,22 @@
 import axios from 'axios';
 
+// Detectar se está rodando no mobile (Capacitor) ou desktop
+const isMobile = window.Capacitor?.isNative || false;
+
+// Configurar URL base baseada no ambiente
+const getBaseURL = () => {
+  if (isMobile) {
+    // No mobile, usar IP da rede local
+    return 'http://192.168.15.15:3001/api';
+  } else {
+    // No desktop, usar localhost
+    return 'http://localhost:3001/api';
+  }
+};
+
 // Configuração base do axios
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: getBaseURL(),
   timeout: 30000, // Aumentar timeout para 30 segundos
   headers: {
     'Content-Type': 'application/json',
@@ -16,6 +30,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`📍 Base URL: ${getBaseURL()}`);
     return config;
   },
   (error) => {

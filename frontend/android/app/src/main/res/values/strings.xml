@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PetshopApp</string>
+    <string name="title_activity_main">PetshopApp</string>
+    <string name="package_name">com.petshop.app</string>
+    <string name="custom_url_scheme">com.petshop.app</string>
+</resources>
