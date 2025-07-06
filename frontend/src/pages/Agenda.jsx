@@ -20,6 +20,7 @@ import {
 import { useAppointments } from '../hooks/useAppointments';
 import { useClients } from '../hooks/useClients';
 import { usePets } from '../hooks/usePets';
+import { useSettings } from '../contexts/SettingsContext';
 
 const Agenda = () => {
   const { 
@@ -35,6 +36,7 @@ const Agenda = () => {
   
   const { clients } = useClients();
   const { pets } = usePets();
+  const { settings } = useSettings();
 
   // Estados do calendário
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -175,11 +177,19 @@ const Agenda = () => {
     }
   };
 
-  // Função para gerar horários do dia
+  // Função para gerar horários do dia conforme configurações
   const getDayHours = () => {
     const hours = [];
-    for (let h = 8; h <= 18; h++) {
-      hours.push(`${h.toString().padStart(2, '0')}:00`);
+    const [startH, startM] = settings.startTime.split(':').map(Number);
+    const [endH, endM] = settings.endTime.split(':').map(Number);
+    const interval = Number(settings.interval);
+    let current = new Date(0, 0, 0, startH, startM);
+    const end = new Date(0, 0, 0, endH, endM);
+    while (current <= end) {
+      const h = current.getHours().toString().padStart(2, '0');
+      const m = current.getMinutes().toString().padStart(2, '0');
+      hours.push(`${h}:${m}`);
+      current = new Date(current.getTime() + interval * 60000);
     }
     return hours;
   };

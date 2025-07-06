@@ -9,7 +9,8 @@ import {
   DollarSign, 
   BarChart3, 
   Shield,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -22,6 +23,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: '/cash-register', icon: DollarSign, label: 'Caixa' },
     { path: '/statistics', icon: BarChart3, label: 'Estatísticas' },
     { path: '/permissions', icon: Shield, label: 'Permissões' },
+    { path: '/settings', icon: Settings, label: 'Configurações' },
   ];
 
   return (
@@ -55,28 +57,30 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </button>
         </div>
 
-        {/* Menu de Navegação */}
-        <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => `
-                  sidebar-item ${isActive ? 'active' : ''}
-                `}
-                onClick={() => setIsOpen(false)}
-              >
-                <Icon className="w-5 h-5 mr-3" />
-                <span className="font-medium">{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </nav>
+        {/* Menu de Navegação rolável */}
+        <div className="flex-1 overflow-y-auto" style={{height: 'calc(100vh - 144px)'}}>
+          <nav className="p-4 space-y-2 pb-8">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => `
+                    sidebar-item ${isActive ? 'active' : ''}
+                  `}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Footer do Sidebar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        {/* Footer do Sidebar fixo */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="text-center text-sm text-gray-500">
             <p>© 2024 PetShop</p>
             <p className="text-xs mt-1">Sistema de Gerenciamento</p>
