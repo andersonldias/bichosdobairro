@@ -22,6 +22,13 @@ function formatPhone(value) {
     .slice(0, 15);
 }
 
+function formatCEP(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{5})(\d{0,3})$/, (match, p1, p2) => p2 ? `${p1}-${p2}` : p1)
+    .slice(0, 9);
+}
+
 const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -69,12 +76,12 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   // Buscar endereço pelo CEP
   useEffect(() => {
     const fetchAddress = async () => {
-      if (cep && cep.length === 8) {
+      const cleanCep = (cep || '').replace(/\D/g, '');
+      if (cleanCep.length === 8) {
         setAddressLoading(true);
         try {
-          const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+          const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
           const data = await response.json();
-          
           if (!data.erro) {
             setValue('street', data.logradouro);
             setValue('neighborhood', data.bairro);
@@ -95,8 +102,9 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const handleFormSubmit = async (data) => {
     setLoading(true);
     try {
-      // Sempre salvar o cliente
-      await onSubmit({ ...data, pets: newPets });
+      // Remove máscara do CEP antes de enviar
+      const cleanCep = (data.cep || '').replace(/\D/g, '');
+      await onSubmit({ ...data, cep: cleanCep, pets: newPets });
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -212,7 +220,8 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
 
   const [formValues, setFormValues] = useState({
     cpf: client?.cpf || '',
-    phone: client?.phone || ''
+    phone: client?.phone || '',
+    cep: client?.cep || ''
   });
 
   const handleCpfChange = (e) => {
@@ -225,6 +234,12 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     const formatted = formatPhone(e.target.value);
     setFormValues((prev) => ({ ...prev, phone: formatted }));
     setValue('phone', formatted);
+  };
+
+  const handleCepChange = (e) => {
+    const formatted = formatCEP(e.target.value);
+    setFormValues((prev) => ({ ...prev, cep: formatted }));
+    setValue('cep', formatted);
   };
 
   return (
@@ -341,6 +356,8 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                     {...register('cep')}
                     className="input-field"
                     placeholder="00000-000"
+                    value={formValues.cep}
+                    onChange={handleCepChange}
                   />
                   {addressLoading && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
