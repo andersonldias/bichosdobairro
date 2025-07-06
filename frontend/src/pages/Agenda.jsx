@@ -47,6 +47,13 @@ const Agenda = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  // Estados para modal de novo agendamento
+  const [showNewAptModal, setShowNewAptModal] = useState(false);
+  const [newAptHour, setNewAptHour] = useState('');
+  const [newAptClient, setNewAptClient] = useState('');
+  const [newAptPet, setNewAptPet] = useState('');
+  const [newAptServices, setNewAptServices] = useState([{ name: '', price: '' }]);
+
   // Memoizar a função de busca por data para evitar loops
   const fetchAppointmentsForMonth = useCallback(async () => {
     const year = currentDate.getFullYear();
@@ -201,6 +208,28 @@ const Agenda = () => {
 
   const calendarDays = generateCalendarDays(currentDate);
   const monthAppointments = getAppointmentsForMonth();
+
+  // Função para abrir modal ao clicar em horário livre
+  const handleOpenNewAptModal = (hour) => {
+    setNewAptHour(hour);
+    setShowNewAptModal(true);
+    setNewAptClient('');
+    setNewAptPet('');
+    setNewAptServices([{ name: '', price: '' }]);
+  };
+
+  // Função para adicionar/remover serviços
+  const handleAddService = () => setNewAptServices([...newAptServices, { name: '', price: '' }]);
+  const handleRemoveService = (idx) => setNewAptServices(newAptServices.filter((_, i) => i !== idx));
+  const handleServiceChange = (idx, field, value) => {
+    setNewAptServices(newAptServices.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+  };
+
+  // Função para salvar (mock, só fecha modal)
+  const handleSaveNewApt = () => {
+    // Aqui você pode integrar com backend
+    setShowNewAptModal(false);
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -377,8 +406,13 @@ const Agenda = () => {
             <div className="space-y-2">
               {getDayHours().map(hour => {
                 const agendamento = getAppointmentsForDate(selectedDate).find(apt => apt.appointment_time && apt.appointment_time.startsWith(hour));
+                const isLivre = !agendamento;
                 return (
-                  <div key={hour} className="flex items-center gap-4 border-b py-2">
+                  <div
+                    key={hour}
+                    className={`flex items-center gap-4 border-b py-2 ${isLivre ? 'cursor-pointer hover:bg-blue-50 transition' : ''}`}
+                    onClick={isLivre ? () => handleOpenNewAptModal(hour) : undefined}
+                  >
                     <span className="w-16 font-mono text-gray-700">{hour}</span>
                     {agendamento ? (
                       <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
@@ -386,9 +420,7 @@ const Agenda = () => {
                         <span className="text-gray-500 text-sm">{agendamento.service_name}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>{getStatusText(agendamento.status)}</span>
                       </div>
-                    ) : (
-                      <span className="text-gray-400">Livre</span>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -637,6 +669,41 @@ const Agenda = () => {
               >
                 Editar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de novo agendamento */}
+      {showNewAptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setShowNewAptModal(false)}><X /></button>
+            <h2 className="text-xl font-bold mb-4">Novo Agendamento - {newAptHour}</h2>
+            <div className="mb-3">
+              <label className="block text-sm font-medium mb-1">Cliente</label>
+              <input type="text" className="input w-full" value={newAptClient} onChange={e => setNewAptClient(e.target.value)} placeholder="Nome do cliente" />
+            </div>
+            <div className="mb-3">
+              <label className="block text-sm font-medium mb-1">Pet</label>
+              <input type="text" className="input w-full" value={newAptPet} onChange={e => setNewAptPet(e.target.value)} placeholder="Nome do pet" />
+            </div>
+            <div className="mb-3">
+              <label className="block text-sm font-medium mb-1">Serviços</label>
+              {newAptServices.map((service, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input type="text" className="input flex-1" placeholder="Serviço" value={service.name} onChange={e => handleServiceChange(idx, 'name', e.target.value)} />
+                  <input type="number" className="input w-24" placeholder="Preço" value={service.price} onChange={e => handleServiceChange(idx, 'price', e.target.value)} />
+                  {newAptServices.length > 1 && (
+                    <button type="button" className="btn btn-xs btn-danger" onClick={() => handleRemoveService(idx)}>-</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className="btn btn-xs btn-outline" onClick={handleAddService}>Adicionar serviço</button>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="btn btn-ghost" onClick={() => setShowNewAptModal(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleSaveNewApt}>Salvar</button>
             </div>
           </div>
         </div>
