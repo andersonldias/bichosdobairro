@@ -3,9 +3,15 @@ import { useForm } from 'react-hook-form';
 import { PawPrint } from 'lucide-react';
 import { useClients } from '../hooks/useClients';
 
-const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons }) => {
+const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, species = [] }) => {
   const [loading, setLoading] = useState(false);
   const { clients, loading: loadingClients } = useClients();
+  const [speciesInput, setSpeciesInput] = useState(pet?.species || '');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const filteredSpecies = species.filter(s =>
+    s.toLowerCase().includes(speciesInput.toLowerCase()) && s.trim() !== ''
+  );
 
   const {
     register,
@@ -30,6 +36,11 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons }
       setValue('client_id', pet.client_id);
     }
   }, [pet, setValue]);
+
+  // Atualiza o valor do species no react-hook-form
+  useEffect(() => {
+    setValue('species', speciesInput);
+  }, [speciesInput, setValue]);
 
   const handleFormSubmit = async (data) => {
     setLoading(true);
@@ -91,16 +102,37 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons }
             <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
           )}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Espécie *</label>
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Espécie</label>
           <input
             type="text"
-            {...register('species', { required: 'Espécie é obrigatória' })}
+            value={speciesInput}
+            onChange={e => {
+              setSpeciesInput(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             className="input-field"
             placeholder="Cachorro, Gato..."
+            autoComplete="off"
+            name="species"
           />
-          {errors.species && (
-            <p className="text-red-600 text-sm mt-1">{errors.species.message}</p>
+          {showSuggestions && filteredSpecies.length > 0 && (
+            <ul className="absolute z-20 bg-white border border-gray-200 rounded shadow-md mt-1 w-full max-h-40 overflow-auto">
+              {filteredSpecies.map(s => (
+                <li
+                  key={s}
+                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                  onMouseDown={() => {
+                    setSpeciesInput(s);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  {s}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
         <div>

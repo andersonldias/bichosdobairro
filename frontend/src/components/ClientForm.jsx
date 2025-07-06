@@ -32,7 +32,7 @@ function formatCEP(value) {
 const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
-  const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets } = usePets();
+  const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets, species } = usePets();
   const [showPetForm, setShowPetForm] = useState(false);
   const [editingPet, setEditingPet] = useState(null);
   const [duplicateName, setDuplicateName] = useState(null);
@@ -539,6 +539,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   onCancel={() => {}}
                   hideButtons={true}
                   resetKey={petFormResetKey}
+                  species={species}
                 />
               </div>
             )}
