@@ -32,6 +32,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [duplicateCpf, setDuplicateCpf] = useState(null);
   const [duplicatePhone, setDuplicatePhone] = useState(null);
   const [newPets, setNewPets] = useState([]);
+  const [petFormResetKey, setPetFormResetKey] = useState(0);
 
   const {
     register,
@@ -94,6 +95,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const handleFormSubmit = async (data) => {
     setLoading(true);
     try {
+      // Sempre salvar o cliente
       await onSubmit({ ...data, pets: newPets });
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
@@ -102,9 +104,38 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     }
   };
 
+  const handleSavePet = async () => {
+    setLoading(true);
+    try {
+      // Pegar os dados do formulário de pet
+      const petForm = document.querySelector('form[data-pet-form]');
+      if (petForm) {
+        const formData = new FormData(petForm);
+        const petData = {
+          name: formData.get('name'),
+          species: formData.get('species'),
+          breed: formData.get('breed'),
+          color: formData.get('color'),
+          gender: formData.get('gender'),
+          birthdate: formData.get('birthdate'),
+          notes: formData.get('notes')
+        };
+        await handlePetFormSubmit(petData);
+        // Não fechar o formulário para permitir adicionar múltiplos pets
+        // O formulário será resetado automaticamente pelo handlePetFormSubmit
+      }
+    } catch (error) {
+      console.error('Erro ao salvar pet:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddPet = () => {
     setEditingPet(null);
     setShowPetForm(true);
+    // Resetar o formulário para um novo pet
+    setPetFormResetKey(prev => prev + 1);
   };
 
   const handleEditPet = (pet, idx) => {
@@ -125,25 +156,39 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     }
   };
 
-  const handlePetFormSubmit = (petData) => {
-    console.log('PetForm submit:', petData); // Debug
+  const handlePetFormSubmit = (petData, { keepOpen = false } = {}) => {
     if (client) {
       // Para clientes existentes, usar createPet/updatePet do hook
       if (editingPet && editingPet.id) {
         updatePet(editingPet.id, petData);
+        if (!keepOpen) {
+          setShowPetForm(false);
+          setEditingPet(null);
+        }
       } else {
         createPet({ ...petData, client_id: client.id });
+        if (!keepOpen) {
+          setShowPetForm(false);
+          setEditingPet(null);
+        }
       }
     } else {
       // Para novos clientes, usar estado local
       if (editingPet && editingPet.idx !== undefined) {
         setNewPets(newPets.map((p, i) => (i === editingPet.idx ? petData : p)));
+        if (!keepOpen) {
+          setShowPetForm(false);
+          setEditingPet(null);
+        }
       } else {
         setNewPets([...newPets, petData]);
+        setEditingPet(null);
+        setPetFormResetKey(prev => prev + 1);
+        if (!keepOpen) {
+          setShowPetForm(false);
+        }
       }
     }
-    setShowPetForm(false);
-    setEditingPet(null);
   };
 
   const handlePetFormCancel = () => {
@@ -446,25 +491,6 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
           </div>
           )}
 
-          {/* Botões */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="btn-secondary"
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="btn-primary flex items-center"
-              disabled={loading}
-            >
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {client ? 'Atualizar' : 'Cadastrar'}
-            </button>
-          </div>
         </form>
 
         {/* Cadastro de Pets - Apenas para novos clientes (FORA DO FORMULÁRIO) */}
@@ -489,16 +515,90 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               <div className="mb-4">
                 <PetForm
                   pet={editingPet || {}}
-                  onSubmit={handlePetFormSubmit}
-                  onCancel={handlePetFormCancel}
+                  onSubmit={petData => {
+                    handlePetFormSubmit(petData, { keepOpen: true });
+                  }}
+                  onCancel={() => {}}
+                  hideButtons={true}
+                  resetKey={petFormResetKey}
                 />
               </div>
             )}
-            <button type="button" className="btn-primary" onClick={handleAddPet}>
-              Adicionar Pet
-            </button>
           </div>
         )}
+
+        {/* Botões - SEMPRE NO FINAL */}
+        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 px-6 pb-6">
+          {!client && (
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={async () => {
+                if (showPetForm) {
+                  // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
+                  const petForm = document.querySelector('form[data-pet-form]');
+                  if (petForm) {
+                    const formData = new FormData(petForm);
+                    const petData = {
+                      name: formData.get('name'),
+                      species: formData.get('species'),
+                      breed: formData.get('breed'),
+                      color: formData.get('color'),
+                      gender: formData.get('gender'),
+                      birthdate: formData.get('birthdate'),
+                      notes: formData.get('notes')
+                    };
+                    handlePetFormSubmit(petData, { keepOpen: true });
+                  }
+                } else {
+                  setEditingPet(null);
+                  setShowPetForm(true);
+                  setPetFormResetKey(prev => prev + 1);
+                }
+              }}
+              disabled={loading}
+            >
+              Adicionar Pet
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn-secondary"
+            disabled={loading}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn-primary flex items-center"
+            disabled={loading}
+            onClick={async () => {
+              // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
+              if (showPetForm) {
+                const petForm = document.querySelector('form[data-pet-form]');
+                if (petForm) {
+                  const formData = new FormData(petForm);
+                  const petData = {
+                    name: formData.get('name'),
+                    species: formData.get('species'),
+                    breed: formData.get('breed'),
+                    color: formData.get('color'),
+                    gender: formData.get('gender'),
+                    birthdate: formData.get('birthdate'),
+                    notes: formData.get('notes')
+                  };
+                  handlePetFormSubmit(petData, { keepOpen: false });
+                }
+              }
+              // Agora salva o cliente e todos os pets
+              document.getElementById('client-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }}
+          >
+            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {client ? 'Atualizar' : 'Cadastrar'}
+          </button>
+        </div>
       </div>
     </div>
   );

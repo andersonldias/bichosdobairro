@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { PawPrint } from 'lucide-react';
 import { useClients } from '../hooks/useClients';
 
-const PetForm = ({ pet, onSubmit, onCancel }) => {
+const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons }) => {
   const [loading, setLoading] = useState(false);
   const { clients, loading: loadingClients } = useClients();
 
@@ -48,7 +48,7 @@ const PetForm = ({ pet, onSubmit, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleFormSubmitWrapper} className="p-4 bg-gray-50 rounded-lg border space-y-6">
+    <form data-pet-form onSubmit={handleFormSubmitWrapper} className="p-4 bg-gray-50 rounded-lg border space-y-6">
       <div className="flex items-center mb-2">
         <PawPrint className="w-5 h-5 mr-2 text-green-500" />
         <h3 className="text-lg font-semibold text-gray-900">
@@ -149,24 +149,27 @@ const PetForm = ({ pet, onSubmit, onCancel }) => {
       </div>
 
       {/* Botões */}
-      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="btn-secondary"
-          disabled={loading}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="btn-primary flex items-center"
-          disabled={loading}
-        >
-          {loading && <span className="mr-2">Salvando...</span>}
-          {pet && pet.name ? 'Atualizar' : 'Cadastrar'}
-        </button>
-      </div>
+      {!hideButtons && (
+        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn-secondary"
+            disabled={loading}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="btn-primary flex items-center"
+            disabled={loading}
+          >
+            {loading && <span className="mr-2">Salvando...</span>}
+            {pet && pet.name ? 'Atualizar' : 'Cadastrar'}
+          </button>
+        </div>
+      )}
+      {customButtons}
     </form>
   );
 };

@@ -152,7 +152,14 @@ class Pet {
         ORDER BY species
       `);
       
-      return rows.map(row => row.species);
+      const species = rows.map(row => row.species);
+      
+      // Se não há espécies cadastradas, retornar lista padrão
+      if (species.length === 0) {
+        return ['Cachorro', 'Gato', 'Ave', 'Peixe', 'Réptil', 'Outro'];
+      }
+      
+      return species;
     } catch (error) {
       throw new Error(`Erro ao buscar espécies: ${error.message}`);
     }
@@ -167,7 +174,14 @@ class Pet {
         ORDER BY breed
       `);
       
-      return rows.map(row => row.breed);
+      const breeds = rows.map(row => row.breed);
+      
+      // Se não há raças cadastradas, retornar lista padrão
+      if (breeds.length === 0) {
+        return ['SRD', 'Labrador', 'Golden Retriever', 'Poodle', 'Bulldog', 'Pastor Alemão', 'Persa', 'Siamês', 'Maine Coon', 'Outro'];
+      }
+      
+      return breeds;
     } catch (error) {
       throw new Error(`Erro ao buscar raças: ${error.message}`);
     }
