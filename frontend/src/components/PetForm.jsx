@@ -10,6 +10,8 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
   const [showSpeciesSuggestions, setShowSpeciesSuggestions] = useState(false);
   const [breedInput, setBreedInput] = useState(pet?.breed || '');
   const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
+  const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(-1);
+  const [selectedBreedIndex, setSelectedBreedIndex] = useState(-1);
 
   const filteredSpecies = species.filter(s =>
     s.toLowerCase().includes(speciesInput.toLowerCase()) && s.trim() !== ''
@@ -66,6 +68,86 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
     handleSubmit(handleFormSubmit)(e);
   };
 
+  // Funções de navegação por teclado para espécies
+  const handleSpeciesKeyDown = (e) => {
+    if (!showSpeciesSuggestions || filteredSpecies.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedSpeciesIndex(prev => 
+          prev < filteredSpecies.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedSpeciesIndex(prev => 
+          prev > 0 ? prev - 1 : filteredSpecies.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedSpeciesIndex >= 0 && selectedSpeciesIndex < filteredSpecies.length) {
+          const selectedSpecies = filteredSpecies[selectedSpeciesIndex];
+          setSpeciesInput(selectedSpecies);
+          setShowSpeciesSuggestions(false);
+          setSelectedSpeciesIndex(-1);
+          console.log('✅ Espécie selecionada via teclado:', selectedSpecies);
+        } else if (filteredSpecies.length === 1) {
+          // Se só há uma opção, selecionar automaticamente
+          setSpeciesInput(filteredSpecies[0]);
+          setShowSpeciesSuggestions(false);
+          setSelectedSpeciesIndex(-1);
+          console.log('✅ Única espécie selecionada:', filteredSpecies[0]);
+        }
+        break;
+      case 'Escape':
+        setShowSpeciesSuggestions(false);
+        setSelectedSpeciesIndex(-1);
+        break;
+    }
+  };
+
+  // Funções de navegação por teclado para raças
+  const handleBreedKeyDown = (e) => {
+    if (!showBreedSuggestions || filteredBreeds.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedBreedIndex(prev => 
+          prev < filteredBreeds.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedBreedIndex(prev => 
+          prev > 0 ? prev - 1 : filteredBreeds.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedBreedIndex >= 0 && selectedBreedIndex < filteredBreeds.length) {
+          const selectedBreed = filteredBreeds[selectedBreedIndex];
+          setBreedInput(selectedBreed);
+          setShowBreedSuggestions(false);
+          setSelectedBreedIndex(-1);
+          console.log('✅ Raça selecionada via teclado:', selectedBreed);
+        } else if (filteredBreeds.length === 1) {
+          // Se só há uma opção, selecionar automaticamente
+          setBreedInput(filteredBreeds[0]);
+          setShowBreedSuggestions(false);
+          setSelectedBreedIndex(-1);
+          console.log('✅ Única raça selecionada:', filteredBreeds[0]);
+        }
+        break;
+      case 'Escape':
+        setShowBreedSuggestions(false);
+        setSelectedBreedIndex(-1);
+        break;
+    }
+  };
+
   return (
     <form data-pet-form onSubmit={handleFormSubmitWrapper} className="p-4 bg-gray-50 rounded-lg border space-y-6">
       <div className="flex items-center mb-2">
@@ -112,16 +194,30 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           )}
         </div>
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Espécie</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Espécie
+            <span className="text-xs text-gray-500 ml-1">(Use ↑↓ para navegar, Enter para selecionar)</span>
+          </label>
           <input
             type="text"
             value={speciesInput}
             onChange={e => {
-              setSpeciesInput(e.target.value);
+              const value = e.target.value;
+              setSpeciesInput(value);
               setShowSpeciesSuggestions(true);
+              setSelectedSpeciesIndex(-1);
+              
+              // Se há apenas uma opção e ela corresponde exatamente, selecionar automaticamente
+              const filtered = species.filter(s =>
+                s.toLowerCase().includes(value.toLowerCase()) && s.trim() !== ''
+              );
+              if (filtered.length === 1 && filtered[0].toLowerCase() === value.toLowerCase()) {
+                setSelectedSpeciesIndex(0);
+              }
             }}
             onFocus={() => setShowSpeciesSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSpeciesSuggestions(false), 150)}
+            onKeyDown={handleSpeciesKeyDown}
             className="input-field"
             placeholder="Cachorro, Gato..."
             autoComplete="off"
@@ -129,32 +225,54 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           />
           {showSpeciesSuggestions && filteredSpecies.length > 0 && (
             <ul className="absolute z-20 bg-white border border-gray-200 rounded shadow-md mt-1 w-full max-h-40 overflow-auto">
-              {filteredSpecies.map(s => (
+              {filteredSpecies.map((s, index) => (
                 <li
                   key={s}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                  className={`px-3 py-2 cursor-pointer transition-colors ${
+                    index === selectedSpeciesIndex 
+                      ? 'bg-blue-500 text-white font-medium' 
+                      : 'hover:bg-gray-100'
+                  }`}
                   onMouseDown={() => {
                     setSpeciesInput(s);
                     setShowSpeciesSuggestions(false);
+                    setSelectedSpeciesIndex(-1);
                   }}
                 >
                   {s}
+                  {index === selectedSpeciesIndex && (
+                    <span className="ml-2 text-xs">← Selecionado</span>
+                  )}
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Raça</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Raça
+            <span className="text-xs text-gray-500 ml-1">(Use ↑↓ para navegar, Enter para selecionar)</span>
+          </label>
           <input
             type="text"
             value={breedInput}
             onChange={e => {
-              setBreedInput(e.target.value);
+              const value = e.target.value;
+              setBreedInput(value);
               setShowBreedSuggestions(true);
+              setSelectedBreedIndex(-1);
+              
+              // Se há apenas uma opção e ela corresponde exatamente, selecionar automaticamente
+              const filtered = breeds.filter(b =>
+                b.toLowerCase().includes(value.toLowerCase()) && b.trim() !== ''
+              );
+              if (filtered.length === 1 && filtered[0].toLowerCase() === value.toLowerCase()) {
+                setSelectedBreedIndex(0);
+              }
             }}
             onFocus={() => setShowBreedSuggestions(true)}
             onBlur={() => setTimeout(() => setShowBreedSuggestions(false), 150)}
+            onKeyDown={handleBreedKeyDown}
             className="input-field"
             placeholder="Raça do pet"
             autoComplete="off"
@@ -162,16 +280,24 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           />
           {showBreedSuggestions && filteredBreeds.length > 0 && (
             <ul className="absolute z-20 bg-white border border-gray-200 rounded shadow-md mt-1 w-full max-h-40 overflow-auto">
-              {filteredBreeds.map(b => (
+              {filteredBreeds.map((b, index) => (
                 <li
                   key={b}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                  className={`px-3 py-2 cursor-pointer transition-colors ${
+                    index === selectedBreedIndex 
+                      ? 'bg-blue-500 text-white font-medium' 
+                      : 'hover:bg-gray-100'
+                    }`}
                   onMouseDown={() => {
                     setBreedInput(b);
                     setShowBreedSuggestions(false);
+                    setSelectedBreedIndex(-1);
                   }}
                 >
                   {b}
+                  {index === selectedBreedIndex && (
+                    <span className="ml-2 text-xs">← Selecionado</span>
+                  )}
                 </li>
               ))}
             </ul>
