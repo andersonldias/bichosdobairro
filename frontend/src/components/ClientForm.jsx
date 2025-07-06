@@ -32,7 +32,7 @@ function formatCEP(value) {
 const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
-  const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets, species } = usePets();
+  const { pets, loading: loadingPets, createPet, updatePet, deletePet, loadPets, species, breeds } = usePets();
   const [showPetForm, setShowPetForm] = useState(false);
   const [editingPet, setEditingPet] = useState(null);
   const [duplicateName, setDuplicateName] = useState(null);
@@ -149,6 +149,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const handleEditPet = (pet, idx) => {
     setEditingPet({ ...pet, idx });
     setShowPetForm(true);
+    setPetFormResetKey(prev => prev + 1);
   };
 
   const handleDeletePet = (idx) => {
@@ -459,20 +460,10 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
 
           {/* Pets do Cliente */}
           {client && (
-          <div>
+            <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                 <span className="mr-2">🐾</span> Pets do Cliente
               </h3>
-              <div className="mb-4">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleAddPet}
-                disabled={loadingPets}
-              >
-                Adicionar Pet
-              </button>
-            </div>
               {loadingPets ? (
                 <div className="text-gray-500">Carregando pets...</div>
               ) : clientPets.length === 0 ? (
@@ -505,7 +496,23 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   ))}
                 </ul>
               )}
-          </div>
+              {showPetForm && (
+                <div className="mb-4">
+                  <PetForm
+                    key={petFormResetKey}
+                    pet={editingPet || {}}
+                    onSubmit={petData => {
+                      handlePetFormSubmit(petData, { keepOpen: true });
+                    }}
+                    onCancel={() => {}}
+                    hideButtons={true}
+                    resetKey={petFormResetKey}
+                    species={species}
+                    breeds={breeds}
+                  />
+                </div>
+              )}
+            </div>
           )}
 
         </form>
@@ -527,7 +534,6 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                 ))}
               </ul>
             )}
-            {/* Formulário embutido de pet */}
             {showPetForm && (
               <div className="mb-4">
                 <PetForm
@@ -540,6 +546,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   hideButtons={true}
                   resetKey={petFormResetKey}
                   species={species}
+                  breeds={breeds}
                 />
               </div>
             )}
@@ -548,59 +555,57 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
 
         {/* Botões - SEMPRE NO FINAL */}
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 px-6 pb-6">
-          {!client && (
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={async () => {
-                try {
-                  if (showPetForm) {
-                    // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
-                    const petForm = document.querySelector('form[data-pet-form]');
-                    if (petForm) {
-                      const formData = new FormData(petForm);
-                      const petData = {
-                        name: formData.get('name'),
-                        species: formData.get('species'),
-                        breed: formData.get('breed'),
-                        color: formData.get('color'),
-                        gender: formData.get('gender'),
-                        birthdate: formData.get('birthdate'),
-                        notes: formData.get('notes')
-                      };
-                      // Só adiciona se tiver pelo menos nome e espécie
-                      if (petData.name && petData.species) {
-                        handlePetFormSubmit(petData, { keepOpen: true });
-                      } else {
-                        // Se não tem dados válidos, apenas abre um novo formulário
-                        setEditingPet(null);
-                        setShowPetForm(true);
-                        setPetFormResetKey(prev => prev + 1);
-                      }
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={async () => {
+              try {
+                if (showPetForm) {
+                  // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
+                  const petForm = document.querySelector('form[data-pet-form]');
+                  if (petForm) {
+                    const formData = new FormData(petForm);
+                    const petData = {
+                      name: formData.get('name'),
+                      species: formData.get('species'),
+                      breed: formData.get('breed'),
+                      color: formData.get('color'),
+                      gender: formData.get('gender'),
+                      birthdate: formData.get('birthdate'),
+                      notes: formData.get('notes')
+                    };
+                    // Só adiciona se tiver pelo menos nome e espécie
+                    if (petData.name && petData.species) {
+                      handlePetFormSubmit(petData, { keepOpen: true });
                     } else {
-                      // Se não encontrar o formulário, apenas abre um novo
+                      // Se não tem dados válidos, apenas abre um novo formulário
                       setEditingPet(null);
                       setShowPetForm(true);
                       setPetFormResetKey(prev => prev + 1);
                     }
                   } else {
+                    // Se não encontrar o formulário, apenas abre um novo
                     setEditingPet(null);
                     setShowPetForm(true);
                     setPetFormResetKey(prev => prev + 1);
                   }
-                } catch (error) {
-                  console.error('Erro ao adicionar pet:', error);
-                  // Em caso de erro, abre um novo formulário
+                } else {
                   setEditingPet(null);
                   setShowPetForm(true);
                   setPetFormResetKey(prev => prev + 1);
                 }
-              }}
-              disabled={loading}
-            >
-              Adicionar Pet
-            </button>
-          )}
+              } catch (error) {
+                console.error('Erro ao adicionar pet:', error);
+                // Em caso de erro, abre um novo formulário
+                setEditingPet(null);
+                setShowPetForm(true);
+                setPetFormResetKey(prev => prev + 1);
+              }
+            }}
+            disabled={loading}
+          >
+            Adicionar Pet
+          </button>
           <button
             type="button"
             onClick={onCancel}

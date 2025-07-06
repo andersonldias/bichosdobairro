@@ -3,14 +3,19 @@ import { useForm } from 'react-hook-form';
 import { PawPrint } from 'lucide-react';
 import { useClients } from '../hooks/useClients';
 
-const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, species = [] }) => {
+const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, species = [], breeds = [] }) => {
   const [loading, setLoading] = useState(false);
   const { clients, loading: loadingClients } = useClients();
   const [speciesInput, setSpeciesInput] = useState(pet?.species || '');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSpeciesSuggestions, setShowSpeciesSuggestions] = useState(false);
+  const [breedInput, setBreedInput] = useState(pet?.breed || '');
+  const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
 
   const filteredSpecies = species.filter(s =>
     s.toLowerCase().includes(speciesInput.toLowerCase()) && s.trim() !== ''
+  );
+  const filteredBreeds = breeds.filter(b =>
+    b.toLowerCase().includes(breedInput.toLowerCase()) && b.trim() !== ''
   );
 
   const {
@@ -37,10 +42,13 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
     }
   }, [pet, setValue]);
 
-  // Atualiza o valor do species no react-hook-form
+  // Atualiza o valor do species e breed no react-hook-form
   useEffect(() => {
     setValue('species', speciesInput);
   }, [speciesInput, setValue]);
+  useEffect(() => {
+    setValue('breed', breedInput);
+  }, [breedInput, setValue]);
 
   const handleFormSubmit = async (data) => {
     setLoading(true);
@@ -109,16 +117,16 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             value={speciesInput}
             onChange={e => {
               setSpeciesInput(e.target.value);
-              setShowSuggestions(true);
+              setShowSpeciesSuggestions(true);
             }}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onFocus={() => setShowSpeciesSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSpeciesSuggestions(false), 150)}
             className="input-field"
             placeholder="Cachorro, Gato..."
             autoComplete="off"
             name="species"
           />
-          {showSuggestions && filteredSpecies.length > 0 && (
+          {showSpeciesSuggestions && filteredSpecies.length > 0 && (
             <ul className="absolute z-20 bg-white border border-gray-200 rounded shadow-md mt-1 w-full max-h-40 overflow-auto">
               {filteredSpecies.map(s => (
                 <li
@@ -126,7 +134,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
                   className="px-3 py-2 cursor-pointer hover:bg-gray-100"
                   onMouseDown={() => {
                     setSpeciesInput(s);
-                    setShowSuggestions(false);
+                    setShowSpeciesSuggestions(false);
                   }}
                 >
                   {s}
@@ -135,14 +143,38 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             </ul>
           )}
         </div>
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">Raça</label>
           <input
             type="text"
-            {...register('breed')}
+            value={breedInput}
+            onChange={e => {
+              setBreedInput(e.target.value);
+              setShowBreedSuggestions(true);
+            }}
+            onFocus={() => setShowBreedSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowBreedSuggestions(false), 150)}
             className="input-field"
             placeholder="Raça do pet"
+            autoComplete="off"
+            name="breed"
           />
+          {showBreedSuggestions && filteredBreeds.length > 0 && (
+            <ul className="absolute z-20 bg-white border border-gray-200 rounded shadow-md mt-1 w-full max-h-40 overflow-auto">
+              {filteredBreeds.map(b => (
+                <li
+                  key={b}
+                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                  onMouseDown={() => {
+                    setBreedInput(b);
+                    setShowBreedSuggestions(false);
+                  }}
+                >
+                  {b}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Cor</label>

@@ -310,6 +310,7 @@ const Pets = () => {
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
               species={species}
+              breeds={breeds}
             />
           </div>
         </div>
