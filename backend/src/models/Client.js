@@ -20,28 +20,27 @@ class Client {
 
   static async findById(id) {
     try {
-      const [rows] = await db.query(`
-        SELECT c.*, 
-               JSON_ARRAYAGG(
-                 JSON_OBJECT(
-                   'id', p.id,
-                   'name', p.name,
-                   'species', p.species,
-                   'breed', p.breed
-                 )
-               ) as pets
-        FROM clients c
-        LEFT JOIN pets p ON c.id = p.client_id
-        WHERE c.id = ?
-        GROUP BY c.id
+      // Primeiro buscar o cliente
+      const [clientRows] = await db.query(`
+        SELECT * FROM clients WHERE id = ?
       `, [id]);
       
-      if (rows.length === 0) {
+      if (clientRows.length === 0) {
         return null;
       }
       
-      const client = rows[0];
-      client.pets = JSON.parse(client.pets[0] || '[]');
+      const client = clientRows[0];
+      
+      // Depois buscar os pets do cliente
+      const [petRows] = await db.query(`
+        SELECT id, name, species, breed, color, gender
+        FROM pets 
+        WHERE client_id = ?
+        ORDER BY name
+      `, [id]);
+      
+      client.pets = petRows;
+      
       return client;
     } catch (error) {
       throw new Error(`Erro ao buscar cliente: ${error.message}`);

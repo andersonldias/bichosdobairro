@@ -105,6 +105,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             {...register('name', { required: 'Nome é obrigatório' })}
             className="input-field"
             placeholder="Nome do pet"
+            name="name"
           />
           {errors.name && (
             <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
@@ -183,11 +184,12 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             {...register('color')}
             className="input-field"
             placeholder="Cor do pet"
+            name="color"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
-          <select {...register('gender')} className="input-field">
+          <select {...register('gender')} className="input-field" name="gender">
             <option value="">Selecione...</option>
             <option value="M">Macho</option>
             <option value="F">Fêmea</option>
@@ -199,6 +201,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             type="date"
             {...register('birthdate')}
             className="input-field"
+            name="birthdate"
           />
         </div>
         <div className="md:col-span-2">
@@ -208,6 +211,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             className="input-field"
             placeholder="Observações sobre o pet"
             rows={2}
+            name="notes"
           />
         </div>
       </div>

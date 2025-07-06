@@ -104,7 +104,33 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     try {
       // Remove máscara do CEP antes de enviar
       const cleanCep = (data.cep || '').replace(/\D/g, '');
-      await onSubmit({ ...data, cep: cleanCep, pets: newPets });
+      
+      // Se há um formulário de pet aberto, pegar os dados dele primeiro
+      let petsToSend = [...newPets];
+      if (showPetForm) {
+        const petForm = document.querySelector('form[data-pet-form]');
+        if (petForm) {
+          const petData = {
+            name: petForm.querySelector('input[name="name"]')?.value || '',
+            species: petForm.querySelector('input[name="species"]')?.value || '',
+            breed: petForm.querySelector('input[name="breed"]')?.value || '',
+            color: petForm.querySelector('input[name="color"]')?.value || '',
+            gender: petForm.querySelector('select[name="gender"]')?.value || '',
+            birthdate: petForm.querySelector('input[name="birthdate"]')?.value || '',
+            notes: petForm.querySelector('textarea[name="notes"]')?.value || ''
+          };
+          if (petData.name && petData.species) {
+            petsToSend.push(petData);
+            console.log('📋 ClientForm.handleFormSubmit - Pet do formulário adicionado:', petData);
+          }
+        }
+      }
+      
+      console.log('📋 ClientForm.handleFormSubmit - newPets:', newPets);
+      console.log('📋 ClientForm.handleFormSubmit - petsToSend:', petsToSend);
+      console.log('📋 ClientForm.handleFormSubmit - dados finais:', { ...data, cep: cleanCep, pets: petsToSend });
+      
+      await onSubmit({ ...data, cep: cleanCep, pets: petsToSend });
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -165,17 +191,33 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     }
   };
 
-  const handlePetFormSubmit = (petData, { keepOpen = false } = {}) => {
+  const handlePetFormSubmit = async (petData, { keepOpen = false } = {}) => {
+    console.log('handlePetFormSubmit chamado com:', petData, { keepOpen, client: !!client });
+    
     if (client) {
       // Para clientes existentes, usar createPet/updatePet do hook
       if (editingPet && editingPet.id) {
-        updatePet(editingPet.id, petData);
+        console.log('Atualizando pet existente:', editingPet.id);
+        try {
+          await updatePet(editingPet.id, petData);
+          console.log('Pet atualizado com sucesso');
+        } catch (error) {
+          console.error('Erro ao atualizar pet:', error);
+        }
         if (!keepOpen) {
           setShowPetForm(false);
           setEditingPet(null);
         }
       } else {
-        createPet({ ...petData, client_id: client.id });
+        console.log('Criando novo pet para cliente existente:', client.id);
+        try {
+          const newPetData = { ...petData, client_id: client.id };
+          console.log('Dados do pet a serem enviados:', newPetData);
+          await createPet(newPetData);
+          console.log('Pet criado com sucesso');
+        } catch (error) {
+          console.error('Erro ao criar pet:', error);
+        }
         if (!keepOpen) {
           setShowPetForm(false);
           setEditingPet(null);
@@ -184,13 +226,20 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     } else {
       // Para novos clientes, usar estado local
       if (editingPet && editingPet.idx !== undefined) {
-        setNewPets(newPets.map((p, i) => (i === editingPet.idx ? petData : p)));
+        console.log('Editando pet na lista local:', editingPet.idx);
+        setNewPets(prev => prev.map((p, i) => (i === editingPet.idx ? petData : p)));
         if (!keepOpen) {
           setShowPetForm(false);
           setEditingPet(null);
         }
       } else {
-        setNewPets([...newPets, petData]);
+        console.log('Adicionando pet à lista local:', petData);
+        console.log('📋 newPets antes:', newPets);
+        setNewPets(prev => {
+          const newPetsArray = [...prev, petData];
+          console.log('📋 newPets depois (estado atualizado):', newPetsArray);
+          return newPetsArray;
+        });
         setEditingPet(null);
         setPetFormResetKey(prev => prev + 1);
         if (!keepOpen) {
@@ -569,37 +618,49 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             type="button"
             className="btn-primary"
             onClick={async () => {
+              console.log('Botão Adicionar Pet clicado');
+              console.log('showPetForm:', showPetForm);
+              console.log('client:', client);
+              
               try {
                 if (showPetForm) {
                   // Se o formulário de pet está aberto, adiciona o pet atual à lista e limpa o formulário
                   const petForm = document.querySelector('form[data-pet-form]');
+                  console.log('PetForm encontrado:', !!petForm);
+                  
                   if (petForm) {
-                    const formData = new FormData(petForm);
+                    // Pegar dados diretamente do DOM
                     const petData = {
-                      name: formData.get('name'),
-                      species: formData.get('species'),
-                      breed: formData.get('breed'),
-                      color: formData.get('color'),
-                      gender: formData.get('gender'),
-                      birthdate: formData.get('birthdate'),
-                      notes: formData.get('notes')
+                      name: petForm.querySelector('input[name="name"]')?.value || '',
+                      species: petForm.querySelector('input[name="species"]')?.value || '',
+                      breed: petForm.querySelector('input[name="breed"]')?.value || '',
+                      color: petForm.querySelector('input[name="color"]')?.value || '',
+                      gender: petForm.querySelector('select[name="gender"]')?.value || '',
+                      birthdate: petForm.querySelector('input[name="birthdate"]')?.value || '',
+                      notes: petForm.querySelector('textarea[name="notes"]')?.value || ''
                     };
+                    console.log('Dados do formulário (DOM):', petData);
+                    
                     // Só adiciona se tiver pelo menos nome e espécie
                     if (petData.name && petData.species) {
-                      handlePetFormSubmit(petData, { keepOpen: true });
+                      console.log('Dados válidos, chamando handlePetFormSubmit');
+                      await handlePetFormSubmit(petData, { keepOpen: true });
                     } else {
+                      console.log('Dados inválidos, abrindo novo formulário');
                       // Se não tem dados válidos, apenas abre um novo formulário
                       setEditingPet(null);
                       setShowPetForm(true);
                       setPetFormResetKey(prev => prev + 1);
                     }
                   } else {
+                    console.log('Formulário não encontrado, abrindo novo');
                     // Se não encontrar o formulário, apenas abre um novo
                     setEditingPet(null);
                     setShowPetForm(true);
                     setPetFormResetKey(prev => prev + 1);
                   }
                 } else {
+                  console.log('Formulário não está aberto, abrindo novo');
                   setEditingPet(null);
                   setShowPetForm(true);
                   setPetFormResetKey(prev => prev + 1);
@@ -631,27 +692,6 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               disabled={loading}
               onClick={async () => {
                 try {
-                  // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
-                  if (showPetForm) {
-                    const petForm = document.querySelector('form[data-pet-form]');
-                    if (petForm) {
-                      const formData = new FormData(petForm);
-                      const petData = {
-                        name: formData.get('name'),
-                        species: formData.get('species'),
-                        breed: formData.get('breed'),
-                        color: formData.get('color'),
-                        gender: formData.get('gender'),
-                        birthdate: formData.get('birthdate'),
-                        notes: formData.get('notes')
-                      };
-                      // Só adiciona se tiver pelo menos nome e espécie
-                      if (petData.name && petData.species) {
-                        handlePetFormSubmit(petData, { keepOpen: false });
-                      }
-                    }
-                  }
-                  
                   // Agora salva o cliente e todos os pets
                   const clientForm = document.getElementById('client-form');
                   if (clientForm) {

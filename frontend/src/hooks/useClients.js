@@ -41,11 +41,14 @@ export const useClients = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('🎯 useClients.createClient - Dados recebidos:', clientData);
       const response = await ClientService.create(clientData);
+      console.log('🎯 useClients.createClient - Resposta:', response);
       setClients(prev => [...prev, response.data]);
       await loadStats(); // Recarregar estatísticas
       return response.data;
     } catch (err) {
+      console.error('❌ useClients.createClient - Erro:', err);
       setError(err.message);
       throw err;
     } finally {

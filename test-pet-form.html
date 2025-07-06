@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste FormData</title>
+</head>
+<body>
+    <h1>Teste FormData</h1>
+    <form id="testForm">
+        <input type="text" name="name" value="Rex" />
+        <input type="text" name="species" value="Cachorro" />
+        <input type="text" name="breed" value="Labrador" />
+        <button type="button" onclick="testFormData()">Testar FormData</button>
+    </form>
+
+    <script>
+        function testFormData() {
+            const form = document.getElementById('testForm');
+            const formData = new FormData(form);
+            
+            console.log('FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, ':', value);
+            }
+            
+            const data = {
+                name: formData.get('name'),
+                species: formData.get('species'),
+                breed: formData.get('breed')
+            };
+            
+            console.log('Dados extraídos:', data);
+        }
+    </script>
+</body>
+</html> 

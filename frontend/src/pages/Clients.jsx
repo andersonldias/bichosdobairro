@@ -51,6 +51,7 @@ const Clients = () => {
 
   const handleFormSubmit = async (clientData) => {
     try {
+      console.log('📋 Clients.handleFormSubmit - Dados recebidos:', clientData);
       if (editingClient) {
         await updateClient(editingClient.id, clientData);
       } else {
@@ -59,7 +60,7 @@ const Clients = () => {
       setShowForm(false);
       setEditingClient(null);
     } catch (error) {
-      console.error('Erro ao salvar cliente:', error);
+      console.error('❌ Clients.handleFormSubmit - Erro:', error);
     }
   };
 

@@ -24,9 +24,12 @@ class ClientService {
   // Criar novo cliente
   static async create(clientData) {
     try {
+      console.log('📤 ClientService.create - Dados enviados:', clientData);
       const response = await api.post('/clients', clientData);
+      console.log('📥 ClientService.create - Resposta:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ ClientService.create - Erro:', error);
       throw new Error('Erro ao criar cliente: ' + error.message);
     }
   }
