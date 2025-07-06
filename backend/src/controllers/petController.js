@@ -39,9 +39,12 @@ class PetController {
   // Criar pet
   static async store(req, res) {
     try {
+      console.log('🚀 POST /pets - Dados recebidos:', req.body);
       const pet = await Pet.create(req.body);
+      console.log('✅ Pet criado com sucesso:', pet);
       res.status(201).json({ success: true, data: pet });
     } catch (error) {
+      console.error('❌ Erro ao criar pet:', error);
       res.status(500).json({ success: false, message: error.message });
     }
   }

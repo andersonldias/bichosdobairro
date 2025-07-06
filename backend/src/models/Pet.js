@@ -48,12 +48,16 @@ class Pet {
 
   static async create(petData) {
     try {
+      console.log('📝 Pet.create chamado com:', petData);
       const { client_id, name, species, breed } = petData;
       
       // Verificar se os campos obrigatórios estão presentes
       if (!client_id || !name || !species) {
+        console.error('❌ Campos obrigatórios faltando:', { client_id, name, species });
         throw new Error('client_id, name e species são obrigatórios');
       }
+      
+      console.log('✅ Campos obrigatórios validados');
       
       // Usar apenas campos básicos por enquanto
       const [result] = await db.query(`
@@ -61,8 +65,11 @@ class Pet {
         VALUES (?, ?, ?, ?)
       `, [client_id, name, species, breed || null]);
       
+      console.log('✅ Pet inserido no banco, ID:', result.insertId);
+      
       return { id: result.insertId, ...petData };
     } catch (error) {
+      console.error('❌ Erro no Pet.create:', error);
       throw new Error(`Erro ao criar pet: ${error.message}`);
     }
   }
