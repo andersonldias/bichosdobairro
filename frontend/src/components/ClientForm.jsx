@@ -243,6 +243,16 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     setValue('cep', formatted);
   };
 
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onCancel]);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -554,7 +564,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
         )}
 
         {/* Botões - SEMPRE NO FINAL */}
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 px-6 pb-6">
+        <div className="flex justify-between pt-6 border-t border-gray-200 px-6 pb-6">
           <button
             type="button"
             className="btn-primary"
@@ -606,74 +616,76 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
           >
             Adicionar Pet
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-secondary"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn-primary flex items-center"
-            disabled={loading}
-            onClick={async () => {
-              try {
-                // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
-                if (showPetForm) {
-                  const petForm = document.querySelector('form[data-pet-form]');
-                  if (petForm) {
-                    const formData = new FormData(petForm);
-                    const petData = {
-                      name: formData.get('name'),
-                      species: formData.get('species'),
-                      breed: formData.get('breed'),
-                      color: formData.get('color'),
-                      gender: formData.get('gender'),
-                      birthdate: formData.get('birthdate'),
-                      notes: formData.get('notes')
-                    };
-                    // Só adiciona se tiver pelo menos nome e espécie
-                    if (petData.name && petData.species) {
-                      handlePetFormSubmit(petData, { keepOpen: false });
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="btn-secondary"
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary flex items-center"
+              disabled={loading}
+              onClick={async () => {
+                try {
+                  // Se o formulário de pet está aberto e preenchido, adiciona o pet antes de cadastrar
+                  if (showPetForm) {
+                    const petForm = document.querySelector('form[data-pet-form]');
+                    if (petForm) {
+                      const formData = new FormData(petForm);
+                      const petData = {
+                        name: formData.get('name'),
+                        species: formData.get('species'),
+                        breed: formData.get('breed'),
+                        color: formData.get('color'),
+                        gender: formData.get('gender'),
+                        birthdate: formData.get('birthdate'),
+                        notes: formData.get('notes')
+                      };
+                      // Só adiciona se tiver pelo menos nome e espécie
+                      if (petData.name && petData.species) {
+                        handlePetFormSubmit(petData, { keepOpen: false });
+                      }
                     }
                   }
-                }
-                
-                // Agora salva o cliente e todos os pets
-                const clientForm = document.getElementById('client-form');
-                if (clientForm) {
-                  clientForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                } else {
-                  // Fallback: chama diretamente o handleFormSubmit
-                  const form = document.querySelector('form');
-                  if (form) {
-                    const formData = new FormData(form);
-                    const clientData = {
-                      name: formData.get('name'),
-                      phone: formData.get('phone'),
-                      cpf: formData.get('cpf'),
-                      address: {
-                        street: formData.get('street'),
-                        number: formData.get('number'),
-                        neighborhood: formData.get('neighborhood'),
-                        city: formData.get('city'),
-                        state: formData.get('state'),
-                        cep: formData.get('cep')
-                      }
-                    };
-                    handleFormSubmit(clientData);
+                  
+                  // Agora salva o cliente e todos os pets
+                  const clientForm = document.getElementById('client-form');
+                  if (clientForm) {
+                    clientForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                  } else {
+                    // Fallback: chama diretamente o handleFormSubmit
+                    const form = document.querySelector('form');
+                    if (form) {
+                      const formData = new FormData(form);
+                      const clientData = {
+                        name: formData.get('name'),
+                        phone: formData.get('phone'),
+                        cpf: formData.get('cpf'),
+                        address: {
+                          street: formData.get('street'),
+                          number: formData.get('number'),
+                          neighborhood: formData.get('neighborhood'),
+                          city: formData.get('city'),
+                          state: formData.get('state'),
+                          cep: formData.get('cep')
+                        }
+                      };
+                      handleFormSubmit(clientData);
+                    }
                   }
+                } catch (error) {
+                  console.error('Erro ao cadastrar:', error);
                 }
-              } catch (error) {
-                console.error('Erro ao cadastrar:', error);
-              }
-            }}
-          >
-            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {client ? 'Atualizar' : 'Cadastrar'}
-          </button>
+              }}
+            >
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {client ? 'Atualizar' : 'Cadastrar'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

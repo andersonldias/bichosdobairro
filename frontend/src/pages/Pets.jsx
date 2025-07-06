@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PawPrint, Plus, Search, Edit, Trash2, Loader2, AlertCircle, User, BarChart3 } from 'lucide-react';
 import { usePets } from '../hooks/usePets';
 import { useClients } from '../hooks/useClients';
@@ -62,6 +62,29 @@ const Pets = () => {
     setShowForm(false);
     setEditingPet(null);
   };
+
+  useEffect(() => {
+    if (!showForm) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setShowForm(false);
+        setEditingPet(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (!showDeleteModal) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setShowDeleteModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showDeleteModal]);
 
   return (
     <div className="space-y-6">
