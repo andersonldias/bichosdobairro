@@ -133,6 +133,7 @@ const Agenda = () => {
   // Selecionar data
   const handleDateSelect = (date) => {
     setSelectedDate(date);
+    setViewMode('day'); // Mudar para visualização do dia
     const dateStr = date.toISOString().split('T')[0];
     fetchAppointmentsByDate(dateStr);
   };
@@ -172,6 +173,15 @@ const Agenda = () => {
       case 'cancelado': return 'Cancelado';
       default: return status;
     }
+  };
+
+  // Função para gerar horários do dia
+  const getDayHours = () => {
+    const hours = [];
+    for (let h = 8; h <= 18; h++) {
+      hours.push(`${h.toString().padStart(2, '0')}:00`);
+    }
+    return hours;
   };
 
   // Carregar agendamentos do mês atual
@@ -216,48 +226,6 @@ const Agenda = () => {
           </button>
         </div>
       </div>
-
-      {/* Estatísticas */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="card">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-blue-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total_appointments || 0}</p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pending || 0}</p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Concluídos</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completed || 0}</p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-purple-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Hoje</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.today || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Filtros e Busca */}
       <div className="card">
@@ -395,38 +363,25 @@ const Agenda = () => {
               <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
               <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
             </div>
-          ) : getAppointmentsForDate(selectedDate).length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum agendamento encontrado
-              </h3>
-            </div>
           ) : (
-            <div className="space-y-4">
-              {getAppointmentsForDate(selectedDate).map((apt) => (
-                <div key={apt.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{apt.client_name}</span>
-                    <span className="text-gray-500">•</span>
-                    <PawPrint className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{apt.pet_name}</span>
+            <div className="space-y-2">
+              {getDayHours().map(hour => {
+                const agendamento = getAppointmentsForDate(selectedDate).find(apt => apt.appointment_time && apt.appointment_time.startsWith(hour));
+                return (
+                  <div key={hour} className="flex items-center gap-4 border-b py-2">
+                    <span className="w-16 font-mono text-gray-700">{hour}</span>
+                    {agendamento ? (
+                      <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
+                        <span className="font-medium text-blue-700">{agendamento.client_name} - {agendamento.pet_name}</span>
+                        <span className="text-gray-500 text-sm">{agendamento.service_name}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>{getStatusText(agendamento.status)}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">Livre</span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">
-                      {formatDate(new Date(apt.appointment_date))} às {formatTime(apt.appointment_time)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{apt.service_name}</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      R$ {parseFloat(apt.total_price || 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -560,6 +515,48 @@ const Agenda = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Estatísticas no final */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
+          <div className="card">
+            <div className="flex items-center">
+              <Calendar className="w-8 h-8 text-blue-500 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Total</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total_appointments || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-center">
+              <Clock className="w-8 h-8 text-yellow-500 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Pendentes</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.pending || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-center">
+              <CheckCircle className="w-8 h-8 text-green-500 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Concluídos</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.completed || 0}</p>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="flex items-center">
+              <Calendar className="w-8 h-8 text-purple-500 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Hoje</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.today || 0}</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
