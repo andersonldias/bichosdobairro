@@ -187,53 +187,110 @@ const Pets = () => {
             </p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Nome</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Espécie</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Raça</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Dono</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Telefone</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-900">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPets.map((pet) => (
-                <tr key={pet.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-gray-900 flex items-center">
-                    <PawPrint className="w-4 h-4 text-green-500 mr-2" />
-                    {pet.name}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{pet.species}</td>
-                  <td className="py-3 px-4 text-gray-600">{pet.breed}</td>
-                  <td className="py-3 px-4 text-gray-600 flex items-center">
-                    <User className="w-4 h-4 text-blue-500 mr-1" />
-                    {pet.client_name}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{pet.client_phone}</td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => handleEdit(pet)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteModal(pet)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+          <div className="space-y-6">
+            {/* Agrupar pets por cliente */}
+            {(() => {
+              const petsByClient = {};
+              filteredPets.forEach(pet => {
+                const clientId = pet.client_id;
+                if (!petsByClient[clientId]) {
+                  petsByClient[clientId] = [];
+                }
+                petsByClient[clientId].push(pet);
+              });
+
+              return Object.entries(petsByClient).map(([clientId, clientPets]) => {
+                const client = clients.find(c => c.id == clientId);
+                const clientName = client ? client.name : 'Cliente não encontrado';
+                const clientPhone = client ? client.phone : '';
+
+                return (
+                  <div key={clientId} className="border border-gray-200 rounded-lg overflow-hidden">
+                    {/* Header do Cliente */}
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <User className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{clientName}</h3>
+                            <p className="text-sm text-gray-600">{clientPhone}</p>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {clientPets.length} pet{clientPets.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+                    {/* Lista de Pets do Cliente */}
+                    <div className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {clientPets.map((pet) => (
+                          <div key={pet.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <PawPrint className="w-4 h-4 text-green-500" />
+                                <h4 className="font-medium text-gray-900">{pet.name}</h4>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <button
+                                  onClick={() => handleEdit(pet)}
+                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setShowDeleteModal(pet)}
+                                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="text-gray-600">Espécie:</span>
+                                <span className="ml-1 text-gray-900">{pet.species}</span>
+                              </div>
+                              {pet.breed && (
+                                <div>
+                                  <span className="text-gray-600">Raça:</span>
+                                  <span className="ml-1 text-gray-900">{pet.breed}</span>
+                                </div>
+                              )}
+                              <div className="flex gap-4">
+                                {pet.age && (
+                                  <div>
+                                    <span className="text-gray-600">Idade:</span>
+                                    <span className="ml-1 text-gray-900">{pet.age} anos</span>
+                                  </div>
+                                )}
+                                {pet.weight && (
+                                  <div>
+                                    <span className="text-gray-600">Peso:</span>
+                                    <span className="ml-1 text-gray-900">{pet.weight} kg</span>
+                                  </div>
+                                )}
+                              </div>
+                              {pet.observations && (
+                                <div>
+                                  <span className="text-gray-600">Obs:</span>
+                                  <span className="ml-1 text-gray-900 text-xs">{pet.observations}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
         )}
       </div>
 
