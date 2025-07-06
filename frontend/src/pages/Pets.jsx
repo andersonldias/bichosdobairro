@@ -296,11 +296,22 @@ const Pets = () => {
 
       {/* Modal de Formulário */}
       {showForm && (
-        <PetForm
-          pet={editingPet}
-          onSubmit={handleFormSubmit}
-          onCancel={handleFormCancel}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-lg relative">
+            <button
+              onClick={handleFormCancel}
+              className="absolute top-2 right-2 p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors z-10"
+              aria-label="Fechar"
+            >
+              <span style={{fontSize: 24, fontWeight: 'bold'}}>&times;</span>
+            </button>
+            <PetForm
+              pet={editingPet}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormCancel}
+            />
+          </div>
+        </div>
       )}
 
       {/* Modal de Confirmação de Exclusão */}
