@@ -1,4 +1,5 @@
 const Client = require('../models/Client');
+const Pet = require('../models/Pet');
 const db = require('../config/database');
 
 class ClientController {
@@ -49,6 +50,10 @@ class ClientController {
   static async store(req, res) {
     try {
       const clientData = req.body;
+      const pets = clientData.pets || [];
+      
+      console.log('Dados do cliente recebidos:', clientData);
+      console.log('Pets recebidos:', pets);
       
       // Validações básicas
       if (!clientData.name || !clientData.cpf || !clientData.phone) {
@@ -68,14 +73,36 @@ class ClientController {
         });
       }
       
+      // Criar cliente
       const newClient = await Client.create(clientData);
+      console.log('Cliente criado:', newClient);
+      
+      // Criar pets se houver
+      const createdPets = [];
+      if (pets.length > 0) {
+        for (const petData of pets) {
+          console.log('Criando pet:', petData);
+          const petWithClientId = { ...petData, client_id: newClient.id };
+          console.log('Pet com client_id:', petWithClientId);
+          const newPet = await Pet.create(petWithClientId);
+          createdPets.push(newPet);
+          console.log('Pet criado:', newPet);
+        }
+      }
+      
+      // Retornar cliente com pets
+      const clientWithPets = {
+        ...newClient,
+        pets: createdPets
+      };
       
       res.status(201).json({
         success: true,
-        data: newClient,
+        data: clientWithPets,
         message: 'Cliente criado com sucesso'
       });
     } catch (error) {
+      console.error('Erro ao criar cliente:', error);
       res.status(500).json({
         success: false,
         message: error.message

@@ -31,6 +31,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const [duplicateName, setDuplicateName] = useState(null);
   const [duplicateCpf, setDuplicateCpf] = useState(null);
   const [duplicatePhone, setDuplicatePhone] = useState(null);
+  const [newPets, setNewPets] = useState([]);
 
   const {
     register,
@@ -56,6 +57,13 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
 
   // Filtrar pets do cliente atual
   const clientPets = client ? pets.filter(p => p.client_id === client.id) : [];
+
+  // Carregar pets quando o componente é montado para clientes existentes
+  useEffect(() => {
+    if (client && client.id) {
+      loadPets();
+    }
+  }, [client, loadPets]);
 
   // Buscar endereço pelo CEP
   useEffect(() => {
@@ -86,7 +94,7 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
   const handleFormSubmit = async (data) => {
     setLoading(true);
     try {
-      await onSubmit(data);
+      await onSubmit({ ...data, pets: newPets });
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
     } finally {
@@ -99,25 +107,49 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
     setShowPetForm(true);
   };
 
-  const handleEditPet = (pet) => {
-    setEditingPet(pet);
+  const handleEditPet = (pet, idx) => {
+    setEditingPet({ ...pet, idx });
     setShowPetForm(true);
   };
 
-  const handleDeletePet = async (petId) => {
-    await deletePet(petId);
-    await loadPets();
+  const handleDeletePet = (idx) => {
+    if (client) {
+      // Para clientes existentes, usar deletePet do hook
+      const petToDelete = clientPets[idx];
+      if (petToDelete && petToDelete.id) {
+        deletePet(petToDelete.id);
+      }
+    } else {
+      // Para novos clientes, usar estado local
+      setNewPets(newPets.filter((_, i) => i !== idx));
+    }
   };
 
-  const handlePetFormSubmit = async (petData) => {
-      if (editingPet) {
-        await updatePet(editingPet.id, { ...petData, client_id: client.id });
+  const handlePetFormSubmit = (petData) => {
+    console.log('PetForm submit:', petData); // Debug
+    if (client) {
+      // Para clientes existentes, usar createPet/updatePet do hook
+      if (editingPet && editingPet.id) {
+        updatePet(editingPet.id, petData);
       } else {
-        await createPet({ ...petData, client_id: client.id });
+        createPet({ ...petData, client_id: client.id });
+      }
+    } else {
+      // Para novos clientes, usar estado local
+      if (editingPet && editingPet.idx !== undefined) {
+        setNewPets(newPets.map((p, i) => (i === editingPet.idx ? petData : p)));
+      } else {
+        setNewPets([...newPets, petData]);
+      }
     }
     setShowPetForm(false);
     setEditingPet(null);
-    await loadPets();
+  };
+
+  const handlePetFormCancel = () => {
+    console.log('PetForm cancel'); // Debug
+    setShowPetForm(false);
+    setEditingPet(null);
   };
 
   async function checkDuplicate(field, value) {
@@ -223,12 +255,18 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   </label>
                   <input
                     type="text"
-                    {...register('phone', { required: 'Telefone é obrigatório' })}
+                    {...register('phone', { 
+                      required: 'Telefone é obrigatório',
+                      pattern: {
+                        value: /^\(\d{2}\) \d{5}-\d{4}$/,
+                        message: 'Telefone deve estar no formato (00) 00000-0000'
+                      }
+                    })}
                     className="input-field"
                     placeholder="(00) 00000-0000"
                     value={formValues.phone}
                     onChange={handlePhoneChange}
-                    onBlur={e => checkDuplicate('phone', e.target.value)}
+                    onBlur={e => checkDuplicate('phone', e.target.value.replace(/\D/g, ''))}
                   />
                   {errors.phone && (
                     <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
@@ -389,14 +427,14 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                         <button
                           type="button"
                           className="btn-secondary px-2 py-1"
-                          onClick={() => handleEditPet(pet)}
+                          onClick={() => handleEditPet(pet, clientPets.indexOf(pet))}
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           className="btn-danger px-2 py-1"
-                          onClick={() => handleDeletePet(pet.id)}
+                          onClick={() => handleDeletePet(clientPets.indexOf(pet))}
                         >
                           Excluir
                         </button>
@@ -404,13 +442,6 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                     </li>
                   ))}
                 </ul>
-              )}
-              {showPetForm && (
-                <PetForm
-                  pet={editingPet}
-                  onSubmit={handlePetFormSubmit}
-                  onCancel={() => { setShowPetForm(false); setEditingPet(null); }}
-                />
               )}
           </div>
           )}
@@ -435,6 +466,39 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             </button>
           </div>
         </form>
+
+        {/* Cadastro de Pets - Apenas para novos clientes (FORA DO FORMULÁRIO) */}
+        {!client && (
+          <div className="p-6 border-t border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Pets do Cliente</h3>
+            {newPets.length > 0 && (
+              <ul className="mb-4">
+                {newPets.map((pet, idx) => (
+                  <li key={idx} className="flex items-center justify-between py-1">
+                    <span>{pet.name} ({pet.species})</span>
+                    <div className="space-x-2">
+                      <button type="button" className="text-blue-600" onClick={() => handleEditPet(pet, idx)}>Editar</button>
+                      <button type="button" className="text-red-600" onClick={() => handleDeletePet(idx)}>Remover</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* Formulário embutido de pet */}
+            {showPetForm && (
+              <div className="mb-4">
+                <PetForm
+                  pet={editingPet || {}}
+                  onSubmit={handlePetFormSubmit}
+                  onCancel={handlePetFormCancel}
+                />
+              </div>
+            )}
+            <button type="button" className="btn-primary" onClick={handleAddPet}>
+              Adicionar Pet
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

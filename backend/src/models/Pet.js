@@ -48,12 +48,18 @@ class Pet {
 
   static async create(petData) {
     try {
-      const { client_id, name, species, breed, age, weight, observations } = petData;
+      const { client_id, name, species, breed } = petData;
       
+      // Verificar se os campos obrigatórios estão presentes
+      if (!client_id || !name || !species) {
+        throw new Error('client_id, name e species são obrigatórios');
+      }
+      
+      // Usar apenas campos básicos por enquanto
       const [result] = await db.query(`
-        INSERT INTO pets (client_id, name, species, breed, age, weight, observations)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [client_id, name, species, breed, age, weight, observations]);
+        INSERT INTO pets (client_id, name, species, breed)
+        VALUES (?, ?, ?, ?)
+      `, [client_id, name, species, breed || null]);
       
       return { id: result.insertId, ...petData };
     } catch (error) {
@@ -63,13 +69,19 @@ class Pet {
 
   static async update(id, petData) {
     try {
-      const { client_id, name, species, breed, age, weight, observations } = petData;
+      const { client_id, name, species, breed } = petData;
       
+      // Verificar se os campos obrigatórios estão presentes
+      if (!client_id || !name || !species) {
+        throw new Error('client_id, name e species são obrigatórios');
+      }
+      
+      // Usar apenas campos básicos por enquanto
       const [result] = await db.query(`
         UPDATE pets 
-        SET client_id = ?, name = ?, species = ?, breed = ?, age = ?, weight = ?, observations = ?
+        SET client_id = ?, name = ?, species = ?, breed = ?
         WHERE id = ?
-      `, [client_id, name, species, breed, age, weight, observations, id]);
+      `, [client_id, name, species, breed || null, id]);
       
       if (result.affectedRows === 0) {
         throw new Error('Pet não encontrado');

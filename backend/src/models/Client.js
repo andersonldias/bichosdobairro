@@ -27,10 +27,7 @@ class Client {
                    'id', p.id,
                    'name', p.name,
                    'species', p.species,
-                   'breed', p.breed,
-                   'age', p.age,
-                   'weight', p.weight,
-                   'observations', p.observations
+                   'breed', p.breed
                  )
                ) as pets
         FROM clients c
@@ -63,12 +60,11 @@ class Client {
   static async create(clientData) {
     try {
       const { name, cpf, phone, cep, street, neighborhood, city, state, number } = clientData;
-      
+      console.log('Dados recebidos para criar cliente:', clientData);
       const [result] = await db.query(`
         INSERT INTO clients (name, cpf, phone, cep, street, neighborhood, city, state, number)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [name, cpf, phone, cep, street, neighborhood, city, state, number]);
-      
       return { id: result.insertId, ...clientData };
     } catch (error) {
       throw new Error(`Erro ao criar cliente: ${error.message}`);
@@ -146,21 +142,33 @@ class Client {
   }
 
   static async findDuplicate({ name, cpf, phone }, excludeId = null) {
-    // Normalizar os campos
-    const cleanCpf = cpf ? cpf.replace(/[^0-9]/g, '') : '';
-    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
-    let query = `SELECT * FROM clients WHERE (
-      LOWER(name) = LOWER(?)
-      OR REPLACE(REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = ?
-      OR REPLACE(REPLACE(REPLACE(REPLACE(phone, '(', ''), ')', ''), '-', ''), ' ', '') = ?
-    )`;
-    const params = [name, cleanCpf, cleanPhone];
-    if (excludeId) {
-      query += ' AND id != ?';
-      params.push(excludeId);
+    try {
+      // Normalizar os campos
+      const cleanCpf = cpf ? cpf.replace(/[^0-9]/g, '') : '';
+      const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+      
+      let query = `SELECT * FROM clients WHERE (
+        LOWER(name) = LOWER(?)
+        OR REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = ?
+        OR REPLACE(REPLACE(REPLACE(REPLACE(phone, '(', ''), ')', ''), '-', ''), ' ', '') = ?
+      )`;
+      
+      const params = [name, cleanCpf, cleanPhone];
+      
+      if (excludeId) {
+        query += ' AND id != ?';
+        params.push(excludeId);
+      }
+      
+      console.log('Query de duplicidade:', query);
+      console.log('Parâmetros:', params);
+      
+      const [rows] = await db.query(query, params);
+      return rows[0] || null;
+    } catch (error) {
+      console.error('Erro na query de duplicidade:', error);
+      throw new Error(`Erro ao verificar duplicidade: ${error.message}`);
     }
-    const [rows] = await db.query(query, params);
-    return rows[0] || null;
   }
 }
 
