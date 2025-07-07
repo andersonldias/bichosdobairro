@@ -21,8 +21,9 @@ router.post('/logout', authenticateToken, logActivity('LOGOUT'), AuthController.
 // Rotas de gerenciamento de usuários (apenas admin)
 router.get('/users', authenticateToken, requireAdmin, logActivity('LIST_USERS'), AuthController.listUsers);
 router.get('/users/stats', authenticateToken, requireAdmin, logActivity('USER_STATS'), AuthController.getUserStats);
-router.get('/users/:id', authenticateToken, requireAdmin, logActivity('GET_USER'), AuthController.getUserById);
-router.put('/users/:id', authenticateToken, requireAdmin, logActivity('UPDATE_USER'), AuthController.updateUser);
+router.post('/users/:id/change-password', authenticateToken, requireAdmin, logActivity('CHANGE_USER_PASSWORD'), AuthController.changeUserPassword);
 router.patch('/users/:id/status', authenticateToken, requireAdmin, logActivity('TOGGLE_USER_STATUS'), AuthController.toggleUserStatus);
+router.put('/users/:id', authenticateToken, requireAdmin, logActivity('UPDATE_USER'), AuthController.updateUser);
+router.get('/users/:id', authenticateToken, requireAdmin, logActivity('GET_USER'), AuthController.getUserById);
 
 module.exports = router; 

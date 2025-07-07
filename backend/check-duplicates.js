@@ -1,90 +1,63 @@
-const db = require('./src/config/database');
+const pool = require('./src/config/database');
 
 async function checkDuplicates() {
   try {
-    console.log('🔍 Verificando pets duplicados...\n');
+    console.log('🔍 Verificando usuários duplicados...\n');
     
-    // Buscar todos os pets com informações do cliente
-    const [pets] = await db.query(`
-      SELECT p.*, c.name as client_name
-      FROM pets p
-      LEFT JOIN clients c ON p.client_id = c.id
-      ORDER BY p.client_id, p.name, p.created_at
-    `);
+    const connection = await pool.getConnection();
     
-    console.log(`📊 Total de pets no banco: ${pets.length}`);
+    // Buscar todos os usuários
+    const [users] = await connection.query('SELECT * FROM users ORDER BY email, created_at');
     
-    // Agrupar por cliente
-    const petsByClient = {};
-    pets.forEach(pet => {
-      if (!petsByClient[pet.client_id]) {
-        petsByClient[pet.client_id] = [];
+    console.log(`📊 Total de usuários no banco: ${users.length}`);
+    
+    // Agrupar por email
+    const emailGroups = {};
+    users.forEach(user => {
+      if (!emailGroups[user.email]) {
+        emailGroups[user.email] = [];
       }
-      petsByClient[pet.client_id].push(pet);
+      emailGroups[user.email].push(user);
     });
-    
-    console.log(`👥 Total de clientes com pets: ${Object.keys(petsByClient).length}\n`);
     
     // Verificar duplicatas
     let hasDuplicates = false;
-    
-    Object.keys(petsByClient).forEach(clientId => {
-      const clientPets = petsByClient[clientId];
-      const clientName = clientPets[0]?.client_name || 'Cliente não encontrado';
-      
-      console.log(`👤 Cliente ${clientId} (${clientName}): ${clientPets.length} pets`);
-      
-      // Verificar se há pets com mesmo nome
-      const petsByName = {};
-      clientPets.forEach(pet => {
-        const key = `${pet.name}-${pet.species}-${pet.breed || 'sem-raça'}`;
-        if (!petsByName[key]) {
-          petsByName[key] = [];
-        }
-        petsByName[key].push(pet);
-      });
-      
-      // Mostrar duplicatas
-      Object.keys(petsByName).forEach(key => {
-        const petsWithSameName = petsByName[key];
-        if (petsWithSameName.length > 1) {
-          hasDuplicates = true;
-          console.log(`  ⚠️  DUPLICATA: ${petsWithSameName.length}x "${key}"`);
-          petsWithSameName.forEach((pet, index) => {
-            console.log(`     ${index + 1}. ID: ${pet.id}, Criado: ${pet.created_at}`);
-          });
-        }
-      });
-      
-      // Mostrar todos os pets do cliente
-      clientPets.forEach(pet => {
-        console.log(`  - ${pet.name} (${pet.species}) - ID: ${pet.id}`);
-      });
-      console.log('');
+    Object.keys(emailGroups).forEach(email => {
+      const group = emailGroups[email];
+      if (group.length > 1) {
+        hasDuplicates = true;
+        console.log(`\n⚠️  DUPLICATA ENCONTRADA: ${email}`);
+        console.log(`   Total de usuários com este email: ${group.length}`);
+        
+        group.forEach((user, index) => {
+          console.log(`   ${index + 1}. ID: ${user.id} | Nome: ${user.name} | Role: ${user.role} | Ativo: ${user.active} | Criado: ${user.created_at}`);
+        });
+      }
     });
     
     if (!hasDuplicates) {
       console.log('✅ Nenhuma duplicata encontrada!');
     } else {
-      console.log('❌ Duplicatas encontradas!');
+      console.log('\n💡 Para limpar duplicatas, execute: node clean-duplicates.js');
     }
     
-    // Mostrar estatísticas gerais
-    console.log('\n📈 Estatísticas:');
-    const speciesCount = {};
-    pets.forEach(pet => {
-      speciesCount[pet.species] = (speciesCount[pet.species] || 0) + 1;
+    // Mostrar todos os usuários
+    console.log('\n📋 TODOS OS USUÁRIOS:');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    users.forEach(user => {
+      console.log(`   ID: ${user.id} | Email: ${user.email} | Nome: ${user.name} | Role: ${user.role} | Ativo: ${user.active}`);
     });
     
-    Object.keys(speciesCount).forEach(species => {
-      console.log(`  ${species}: ${speciesCount[species]}`);
-    });
+    connection.release();
     
   } catch (error) {
-    console.error('❌ Erro ao verificar duplicatas:', error);
-  } finally {
-    process.exit(0);
+    console.error('❌ Erro:', error.message);
   }
 }
 
-checkDuplicates(); 
+checkDuplicates().then(() => {
+  process.exit(0);
+}).catch((error) => {
+  console.error('Erro:', error);
+  process.exit(1);
+}); 

@@ -182,7 +182,7 @@ class AuthController {
     }
   }
 
-  // Alterar senha
+  // Alterar senha do próprio usuário
   static async changePassword(req, res) {
     try {
       const { currentPassword, newPassword } = req.body;
@@ -218,6 +218,98 @@ class AuthController {
         return res.status(400).json({
           success: false,
           message: error.message
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  // Alterar senha de outro usuário (apenas admin)
+  static async changeUserPassword(req, res) {
+    try {
+      const { id } = req.params;
+      const { currentPassword, newPassword } = req.body;
+
+      console.log(`🔐 Controller: Alterando senha para usuário ID: ${id}`);
+
+      // Validações
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha atual e nova senha são obrigatórias'
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nova senha deve ter pelo menos 6 caracteres'
+        });
+      }
+
+      // Verificar se o usuário existe
+      const targetUser = await User.findById(id);
+      if (!targetUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado'
+        });
+      }
+
+      console.log(`   Usuário alvo: ${targetUser.name} (${targetUser.email})`);
+
+      // Verificar se não há duplicatas antes da alteração
+      const [beforeCount] = await require('../config/database').query(
+        'SELECT COUNT(*) as count FROM users WHERE email = ?',
+        [targetUser.email]
+      );
+
+      console.log(`   Usuários com este email antes da alteração: ${beforeCount[0].count}`);
+
+      // Alterar senha
+      const result = await User.changePassword(id, currentPassword, newPassword);
+
+      // Verificar se não houve duplicação após a alteração
+      const [afterCount] = await require('../config/database').query(
+        'SELECT COUNT(*) as count FROM users WHERE email = ?',
+        [targetUser.email]
+      );
+
+      console.log(`   Usuários com este email após a alteração: ${afterCount[0].count}`);
+
+      if (afterCount[0].count > beforeCount[0].count) {
+        console.error(`   ❌ DUPLICAÇÃO DETECTADA: ${beforeCount[0].count} → ${afterCount[0].count}`);
+        return res.status(500).json({
+          success: false,
+          message: 'Erro: Detectada duplicação de usuário durante a alteração de senha'
+        });
+      }
+
+      console.log(`   ✅ Verificação de duplicação: OK`);
+
+      res.json({
+        success: true,
+        message: result.message
+      });
+
+    } catch (error) {
+      console.error('Erro ao alterar senha do usuário:', error);
+      
+      if (error.message.includes('Senha atual incorreta')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+
+      if (error.message.includes('Detectada possível duplicação')) {
+        return res.status(500).json({
+          success: false,
+          message: 'Erro: Detectada duplicação de usuário. Operação cancelada.'
         });
       }
 

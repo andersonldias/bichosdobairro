@@ -101,6 +101,8 @@ class User {
   // Alterar senha
   static async changePassword(id, currentPassword, newPassword) {
     try {
+      console.log(`🔐 Alterando senha para usuário ID: ${id}`);
+      
       // Buscar usuário com senha
       const [rows] = await db.query(
         'SELECT * FROM users WHERE id = ?',
@@ -112,6 +114,7 @@ class User {
       }
 
       const user = rows[0];
+      console.log(`   Usuário encontrado: ${user.name} (${user.email})`);
 
       // Verificar senha atual
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
@@ -119,18 +122,40 @@ class User {
         throw new Error('Senha atual incorreta');
       }
 
+      console.log('   Senha atual válida');
+
       // Criptografar nova senha
       const saltRounds = 12;
       const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-      // Atualizar senha
-      await db.query(
+      // Atualizar senha (APENAS a senha, não criar novo usuário)
+      const [updateResult] = await db.query(
         'UPDATE users SET password = ? WHERE id = ?',
         [hashedNewPassword, id]
       );
 
+      if (updateResult.affectedRows === 0) {
+        throw new Error('Falha ao atualizar senha');
+      }
+
+      console.log(`   Senha atualizada com sucesso para usuário ID: ${id}`);
+
+      // Verificar se não houve duplicação
+      const [verifyRows] = await db.query(
+        'SELECT COUNT(*) as count FROM users WHERE email = ?',
+        [user.email]
+      );
+
+      if (verifyRows[0].count > 1) {
+        console.error(`   ⚠️  ATENÇÃO: Encontrados ${verifyRows[0].count} usuários com email ${user.email}`);
+        throw new Error('Detectada possível duplicação de usuário');
+      }
+
+      console.log(`   ✅ Verificação de duplicação: OK (${verifyRows[0].count} usuário)`);
+
       return { message: 'Senha alterada com sucesso' };
     } catch (error) {
+      console.error(`   ❌ Erro ao alterar senha: ${error.message}`);
       throw new Error('Erro ao alterar senha: ' + error.message);
     }
   }

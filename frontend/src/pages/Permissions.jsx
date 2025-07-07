@@ -29,6 +29,10 @@ const Permissions = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
 
   // Carregar usuários
   useEffect(() => {
@@ -59,8 +63,25 @@ const Permissions = () => {
       role: 'atendente'
     });
     setEditingUser(null);
-    setError('');
-    setSuccess('');
+    setFormError('');
+    setFormSuccess('');
+  };
+
+  // Limpar formulário de senha
+  const clearPasswordForm = () => {
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setPasswordUser(null);
+    setShowPasswords({
+      current: false,
+      new: false,
+      confirm: false
+    });
+    setPasswordError('');
+    setPasswordSuccess('');
   };
 
   // Abrir formulário para novo usuário
@@ -84,8 +105,8 @@ const Permissions = () => {
   // Salvar usuário
   const handleSaveUser = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setFormError('');
+    setFormSuccess('');
 
     try {
       if (editingUser) {
@@ -97,23 +118,93 @@ const Permissions = () => {
         });
         
         if (response.data.success) {
-          setSuccess('Usuário atualizado com sucesso!');
-          setShowForm(false);
-          loadUsers();
+          setFormSuccess('Usuário atualizado com sucesso!');
+          setTimeout(() => {
+            setShowForm(false);
+            loadUsers();
+          }, 1500);
         }
       } else {
         // Criar novo usuário
         const response = await api.post('/auth/register', formData);
         
         if (response.data.success) {
-          setSuccess('Usuário criado com sucesso!');
-          setShowForm(false);
-          loadUsers();
+          setFormSuccess('Usuário criado com sucesso!');
+          setTimeout(() => {
+            setShowForm(false);
+            loadUsers();
+          }, 1500);
         }
       }
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
-      setError(error.response?.data?.message || 'Erro ao salvar usuário');
+      setFormError(error.response?.data?.message || 'Erro ao salvar usuário');
+    }
+  };
+
+  // Funções para limpar mensagens quando usuário digita
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Limpar mensagens quando usuário começar a digitar
+    if (formError) setFormError('');
+    if (formSuccess) setFormSuccess('');
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Limpar mensagens quando usuário começar a digitar
+    if (passwordError) setPasswordError('');
+    if (passwordSuccess) setPasswordSuccess('');
+  };
+
+  // Abrir formulário para alterar senha
+  const handleChangePassword = (user) => {
+    setPasswordUser(user);
+    setShowPasswordForm(true);
+  };
+
+  // Salvar nova senha
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    // Validar se as senhas coincidem
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('As senhas não coincidem');
+      return;
+    }
+
+    // Validar tamanho da senha
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      const response = await api.post(`/auth/users/${passwordUser.id}/change-password`, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
+      if (response.data.success) {
+        setPasswordSuccess('Senha alterada com sucesso!');
+        setTimeout(() => {
+          setShowPasswordForm(false);
+          clearPasswordForm();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+      setPasswordError(error.response?.data?.message || 'Erro ao alterar senha');
     }
   };
 
@@ -261,6 +352,14 @@ const Permissions = () => {
                         <Edit className="w-4 h-4" />
                       </button>
                       
+                      <button
+                        onClick={() => handleChangePassword(user)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Alterar Senha"
+                      >
+                        <Lock className="w-4 h-4" />
+                      </button>
+                      
                       {user.id !== currentUser?.id && (
                         <button
                           onClick={() => handleToggleUserStatus(user.id, user.active)}
@@ -294,14 +393,28 @@ const Permissions = () => {
             </div>
             
             <form onSubmit={handleSaveUser} className="px-6 py-4 space-y-4">
+              {/* Mensagens de erro e sucesso */}
+              {formError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">{formError}</p>
+                </div>
+              )}
+              
+              {formSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">{formSuccess}</p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome *
                 </label>
                 <input
                   type="text"
+                  name="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={handleFormChange}
                   className="input-field"
                   required
                 />
@@ -313,8 +426,9 @@ const Permissions = () => {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={handleFormChange}
                   className="input-field"
                   required
                 />
@@ -325,14 +439,15 @@ const Permissions = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Senha *
                   </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="input-field"
-                    required
-                    minLength={6}
-                  />
+                                  <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleFormChange}
+                  className="input-field"
+                  required
+                  minLength={6}
+                />
                 </div>
               )}
               
@@ -341,8 +456,9 @@ const Permissions = () => {
                   Função *
                 </label>
                 <select
+                  name="role"
                   value={formData.role}
-                  onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  onChange={handleFormChange}
                   className="input-field"
                   required
                 >
@@ -356,7 +472,10 @@ const Permissions = () => {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  clearForm();
+                }}
                 className="btn-secondary"
               >
                 Cancelar
@@ -366,6 +485,137 @@ const Permissions = () => {
                 className="btn-primary"
               >
                 {editingUser ? 'Atualizar' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de alteração de senha */}
+      {showPasswordForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">
+                Alterar Senha - {passwordUser?.name}
+              </h3>
+            </div>
+            
+            <form onSubmit={handleSavePassword} className="px-6 py-4 space-y-4">
+              {/* Mensagens de erro e sucesso */}
+              {passwordError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">{passwordError}</p>
+                </div>
+              )}
+              
+              {passwordSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">{passwordSuccess}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Senha Atual *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? 'text' : 'password'}
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="input-field pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPasswords.current ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nova Senha *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.new ? 'text' : 'password'}
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className="input-field pr-10"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPasswords.new ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirmar Nova Senha *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? 'text' : 'password'}
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className="input-field pr-10"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPasswords.confirm ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+            
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordForm(false);
+                  clearPasswordForm();
+                }}
+                className="btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSavePassword}
+                className="btn-primary"
+              >
+                Alterar Senha
               </button>
             </div>
           </div>
