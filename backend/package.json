@@ -6,12 +6,15 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "prod": "NODE_ENV=production node src/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "db:setup": "node src/config/setupDatabase.js",
     "db:reset": "node src/config/setupDatabase.js",
     "db:test": "node test-connection.js",
-    "db:tables": "node setup-tables.js"
+    "db:tables": "node setup-tables.js",
+    "create-admin": "node create-admin.js",
+    "build": "echo 'Backend pronto para produção'"
   },
   "keywords": [
     "petshop",
@@ -23,10 +26,14 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.10.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
     "jest": "^29.7.0",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.5",
     "puppeteer": "^24.11.2"
   },

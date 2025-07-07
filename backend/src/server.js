@@ -1,9 +1,22 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Middlewares de segurança
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 
 // Middlewares
 app.use(cors({
@@ -16,8 +29,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging
 app.use((req, res, next) => {
@@ -36,12 +49,14 @@ app.get('/', (req, res) => {
 });
 
 // Importar rotas
+const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/clients');
 const petRoutes = require('./routes/pets');
 const serviceTypeRoutes = require('./routes/serviceTypes');
 const appointmentRoutes = require('./routes/appointments');
 
 // Rotas da API
+app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/service-types', serviceTypeRoutes);
@@ -79,6 +94,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 URL Local: http://localhost:${PORT}`);
   console.log(`🌐 URL Rede: http://192.168.15.15:${PORT}`);
+  console.log(`🔒 Sistema de segurança ativo`);
 });
 
 module.exports = app; 
