@@ -325,10 +325,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Informações Básicas</h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
                   Nome Completo *
                 </label>
                 <input
+                  id="clientName"
                   type="text"
                   {...register('name', { required: 'Nome é obrigatório' })}
                   className="input-field"
@@ -344,10 +345,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="clientCpf" className="block text-sm font-medium text-gray-700 mb-2">
                     CPF *
                   </label>
                   <input
+                    id="clientCpf"
                     type="text"
                     {...register('cpf', { 
                       required: 'CPF é obrigatório',
@@ -370,10 +372,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700 mb-2">
                     Telefone *
                   </label>
                   <input
+                    id="clientPhone"
                     type="text"
                     {...register('phone', { 
                       required: 'Telefone é obrigatório',
@@ -407,11 +410,12 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientCep" className="block text-sm font-medium text-gray-700 mb-2">
                   CEP
                 </label>
                 <div className="relative">
                   <input
+                    id="clientCep"
                     type="text"
                     {...register('cep')}
                     className="input-field"
@@ -426,10 +430,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientNumber" className="block text-sm font-medium text-gray-700 mb-2">
                   Número *
                 </label>
                 <input
+                  id="clientNumber"
                   type="text"
                   {...register('number', { required: 'Número é obrigatório' })}
                   className="input-field"
@@ -441,10 +446,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientStreet" className="block text-sm font-medium text-gray-700 mb-2">
                   Rua
                 </label>
                 <input
+                  id="clientStreet"
                   type="text"
                   {...register('street')}
                   className="input-field"
@@ -453,10 +459,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientNeighborhood" className="block text-sm font-medium text-gray-700 mb-2">
                   Bairro
                 </label>
                 <input
+                  id="clientNeighborhood"
                   type="text"
                   {...register('neighborhood')}
                   className="input-field"
@@ -465,10 +472,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientCity" className="block text-sm font-medium text-gray-700 mb-2">
                   Cidade
                 </label>
                 <input
+                  id="clientCity"
                   type="text"
                   {...register('city')}
                   className="input-field"
@@ -477,10 +485,11 @@ const ClientForm = ({ client, onSubmit, onCancel }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="clientState" className="block text-sm font-medium text-gray-700 mb-2">
                   Estado
                 </label>
                 <select
+                  id="clientState"
                   {...register('state')}
                   className="input-field"
                 >

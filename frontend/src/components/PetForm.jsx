@@ -159,7 +159,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
       {/* Dono do Pet - Apenas se for um cliente existente */}
       {pet && pet.client_id ? (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Dono *</label>
+          <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">Dono *</label>
           <select
             {...register('client_id', { required: 'Selecione o dono do pet' })}
             className="input-field"
@@ -181,12 +181,13 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
       {/* Dados do Pet */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
           <input
             type="text"
             {...register('name', { required: 'Nome é obrigatório' })}
             className="input-field"
             placeholder="Nome do pet"
+            id="name"
             name="name"
           />
           {errors.name && (
@@ -194,7 +195,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           )}
         </div>
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="species" className="block text-sm font-medium text-gray-700 mb-2">
             Espécie
           </label>
           <input
@@ -220,6 +221,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             className="input-field"
             placeholder="Cachorro, Gato..."
             autoComplete="off"
+            id="species"
             name="species"
           />
           {showSpeciesSuggestions && filteredSpecies.length > 0 && (
@@ -248,7 +250,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           )}
         </div>
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-2">
             Raça
           </label>
           <input
@@ -274,6 +276,7 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
             className="input-field"
             placeholder="Raça do pet"
             autoComplete="off"
+            id="breed"
             name="breed"
           />
           {showBreedSuggestions && filteredBreeds.length > 0 && (
@@ -302,39 +305,42 @@ const PetForm = ({ pet, onSubmit, onCancel, hideButtons = false, customButtons, 
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Cor</label>
+          <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">Cor</label>
           <input
             type="text"
             {...register('color')}
             className="input-field"
             placeholder="Cor do pet"
+            id="color"
             name="color"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
-          <select {...register('gender')} className="input-field" name="gender">
+          <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
+          <select {...register('gender')} className="input-field" id="gender" name="gender">
             <option value="">Selecione...</option>
             <option value="M">Macho</option>
             <option value="F">Fêmea</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Data de Nascimento</label>
+          <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">Data de Nascimento</label>
           <input
             type="date"
             {...register('birthdate')}
             className="input-field"
+            id="birthdate"
             name="birthdate"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
           <textarea
             {...register('notes')}
             className="input-field"
             placeholder="Observações sobre o pet"
             rows={2}
+            id="notes"
             name="notes"
           />
         </div>

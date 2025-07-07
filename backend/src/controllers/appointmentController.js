@@ -97,6 +97,12 @@ const appointmentController = {
         }
       }
 
+      // Verificar se já existe agendamento para o mesmo dia e horário
+      const existing = await Appointment.findByDateAndTime(appointment_date, appointment_time);
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'Já existe um agendamento para este horário.' });
+      }
+
       const appointment = await Appointment.create({
         client_id: parseInt(client_id),
         pet_id: parseInt(pet_id),

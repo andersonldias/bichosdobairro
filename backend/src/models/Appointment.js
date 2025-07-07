@@ -5,7 +5,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -14,7 +16,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         ORDER BY a.appointment_date DESC, a.appointment_time ASC
       `);
       return rows;
@@ -28,7 +30,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -37,7 +41,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         WHERE a.id = ?
       `, [id]);
       return rows[0];
@@ -51,7 +55,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -60,7 +66,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         WHERE a.appointment_date = ?
         ORDER BY a.appointment_time ASC
       `, [date]);
@@ -75,7 +81,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -84,7 +92,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         WHERE a.client_id = ?
         ORDER BY a.appointment_date DESC, a.appointment_time ASC
       `, [clientId]);
@@ -99,7 +107,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -108,7 +118,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         WHERE a.pet_id = ?
         ORDER BY a.appointment_date DESC, a.appointment_time ASC
       `, [petId]);
@@ -221,7 +231,7 @@ class Appointment {
           COUNT(CASE WHEN status = 'concluido' THEN 1 END) as completed,
           COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelled,
           COUNT(CASE WHEN appointment_date = CURDATE() THEN 1 END) as today,
-          COALESCE(SUM(total_price), 0) as total_revenue
+          COALESCE(SUM(price), 0) as total_revenue
         FROM appointments
         WHERE status != 'cancelado'
       `);
@@ -236,7 +246,9 @@ class Appointment {
     try {
       const [rows] = await db.execute(`
         SELECT 
-          a.*,
+          a.*, 
+          DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as appointment_date,
+          DATE_FORMAT(a.appointment_time, '%H:%i') as appointment_time,
           c.name as client_name,
           c.phone as client_phone,
           p.name as pet_name,
@@ -245,7 +257,7 @@ class Appointment {
         FROM appointments a
         JOIN clients c ON a.client_id = c.id
         JOIN pets p ON a.pet_id = p.id
-        JOIN service_types st ON a.service_type_id = st.id
+        LEFT JOIN service_types st ON a.service_type_id = st.id
         WHERE 
           c.name LIKE ? OR 
           p.name LIKE ? OR 
@@ -258,6 +270,14 @@ class Appointment {
       console.error('Erro ao buscar agendamentos:', error);
       throw error;
     }
+  }
+
+  static async findByDateAndTime(date, time) {
+    const [rows] = await db.execute(
+      `SELECT * FROM appointments WHERE appointment_date = ? AND appointment_time = ?`,
+      [date, time]
+    );
+    return rows;
   }
 }
 

@@ -21,6 +21,14 @@ import { useAppointments } from '../hooks/useAppointments';
 import { useClients } from '../hooks/useClients';
 import { usePets } from '../hooks/usePets';
 import { useSettings } from '../contexts/SettingsContext';
+import { useServiceTypes } from '../hooks/useServiceTypes';
+
+function formatCurrencyBRL(value) {
+  if (typeof value === 'string') value = value.replace(/\D/g, '');
+  if (!value) return '';
+  const number = parseFloat(value) / 100;
+  return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
 const Agenda = () => {
   const { 
@@ -31,12 +39,14 @@ const Agenda = () => {
     fetchAppointmentsByDate,
     updateAppointmentStatus,
     deleteAppointment,
-    searchAppointments
+    searchAppointments,
+    createAppointment
   } = useAppointments();
   
   const { clients } = useClients();
   const { pets } = usePets();
   const { settings } = useSettings();
+  const { serviceTypes } = useServiceTypes();
 
   // Estados do calendário
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -225,11 +235,71 @@ const Agenda = () => {
     setNewAptServices(newAptServices.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   };
 
-  // Função para salvar (mock, só fecha modal)
-  const handleSaveNewApt = () => {
-    // Aqui você pode integrar com backend
-    setShowNewAptModal(false);
+  // Função para salvar (agora cria um agendamento para cada serviço)
+  const handleSaveNewApt = async () => {
+    // Validação robusta dos campos obrigatórios
+    if (!newAptClient || isNaN(Number(newAptClient))) {
+      alert('Selecione um cliente válido.');
+      return;
+    }
+    if (!newAptPet || isNaN(Number(newAptPet))) {
+      alert('Selecione um pet válido.');
+      return;
+    }
+    if (!newAptHour || !/^\d{2}:\d{2}$/.test(newAptHour)) {
+      alert('Selecione um horário válido (formato HH:mm).');
+      return;
+    }
+    if (!newAptServices.length) {
+      alert('Adicione pelo menos um serviço.');
+      return;
+    }
+    for (const service of newAptServices) {
+      if (!service.name) {
+        alert('Selecione o nome do serviço.');
+        return;
+      }
+      if (!service.price || isNaN(parseFloat(service.price)) || parseFloat(service.price) <= 0) {
+        alert('Informe um preço válido para o serviço.');
+        return;
+      }
+      const serviceType = serviceTypes.find(st => st.name === service.name);
+      if (!serviceType) {
+        alert('Serviço selecionado não existe.');
+        return;
+      }
+    }
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    try {
+      await Promise.all(newAptServices.map(async (service) => {
+        const serviceType = serviceTypes.find(st => st.name === service.name);
+        await createAppointment({
+          client_id: Number(newAptClient),
+          pet_id: Number(newAptPet),
+          service_type_id: serviceType ? Number(serviceType.id) : null,
+          service_name: service.name,
+          price: parseFloat(service.price),
+          appointment_date: selectedDateStr,
+          appointment_time: newAptHour,
+          status: 'agendado',
+          transport_required: false,
+          transport_price: 0,
+          notes: ''
+        });
+      }));
+      setShowNewAptModal(false);
+      await fetchAppointmentsByDate(selectedDateStr);
+    } catch (err) {
+      alert('Erro ao salvar agendamento. Verifique se todos os dados estão corretos e tente novamente.');
+    }
   };
+
+  // No modal:
+  // Filtrar pets do cliente selecionado
+  const petsDoCliente = pets.filter(pet => String(pet.client_id) === String(newAptClient));
+
+  // Função util para extrair o primeiro nome do cliente
+  const getPrimeiroNome = (nomeCompleto) => nomeCompleto ? nomeCompleto.split(' ')[0] : '';
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -405,8 +475,8 @@ const Agenda = () => {
           ) : (
             <div className="space-y-2">
               {getDayHours().map(hour => {
-                const agendamento = getAppointmentsForDate(selectedDate).find(apt => apt.appointment_time && apt.appointment_time.startsWith(hour));
-                const isLivre = !agendamento;
+                const agendamentos = getAppointmentsForDate(selectedDate).filter(apt => apt.appointment_time && apt.appointment_time.startsWith(hour));
+                const isLivre = agendamentos.length === 0;
                 return (
                   <div
                     key={hour}
@@ -414,11 +484,26 @@ const Agenda = () => {
                     onClick={isLivre ? () => handleOpenNewAptModal(hour) : undefined}
                   >
                     <span className="w-16 font-mono text-gray-700">{hour}</span>
-                    {agendamento ? (
-                      <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
-                        <span className="font-medium text-blue-700">{agendamento.client_name} - {agendamento.pet_name}</span>
-                        <span className="text-gray-500 text-sm">{agendamento.service_name}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>{getStatusText(agendamento.status)}</span>
+                    {!isLivre ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <span className="font-medium text-blue-700">{agendamentos[0].pet_name} – {getPrimeiroNome(agendamentos[0].client_name)}</span>
+                        {agendamentos.map((agendamento, index) => (
+                          <div key={agendamento.id} className="flex items-center gap-1">
+                            <span className="text-gray-500 text-sm">– {agendamento.service_name}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>{getStatusText(agendamento.status)}</span>
+                          </div>
+                        ))}
+                        <button
+                          className="ml-auto p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Editar agendamento"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedAppointment(agendamentos[0]);
+                            setShowAppointmentModal(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                       </div>
                     ) : null}
                   </div>
@@ -662,8 +747,13 @@ const Agenda = () => {
               </button>
               <button
                 onClick={() => {
-                  // Implementar edição
                   setShowAppointmentModal(false);
+                  // Preencher o modal de edição com os dados do agendamento selecionado
+                  setNewAptHour(selectedAppointment.appointment_time);
+                  setNewAptClient(selectedAppointment.client_id);
+                  setNewAptPet(selectedAppointment.pet_id);
+                  setNewAptServices([{ name: selectedAppointment.service_name, price: String(Math.round(Number(selectedAppointment.price * 100))) }]);
+                  setShowNewAptModal(true);
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
@@ -681,21 +771,74 @@ const Agenda = () => {
             <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setShowNewAptModal(false)}><X /></button>
             <h2 className="text-xl font-bold mb-4">Novo Agendamento - {newAptHour}</h2>
             <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Cliente</label>
-              <input type="text" className="input w-full" value={newAptClient} onChange={e => setNewAptClient(e.target.value)} placeholder="Nome do cliente" />
+              <label htmlFor="newAptClient" className="block text-sm font-medium mb-1">Cliente</label>
+              <select
+                id="newAptClient"
+                name="newAptClient"
+                className="input w-full"
+                value={newAptClient}
+                onChange={e => {
+                  setNewAptClient(e.target.value);
+                  setNewAptPet('');
+                }}
+              >
+                <option value="">Selecione o cliente</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>{client.name}</option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Pet</label>
-              <input type="text" className="input w-full" value={newAptPet} onChange={e => setNewAptPet(e.target.value)} placeholder="Nome do pet" />
+              <label htmlFor="newAptPet" className="block text-sm font-medium mb-1">Pet</label>
+              <select
+                id="newAptPet"
+                name="newAptPet"
+                className="input w-full"
+                value={newAptPet}
+                onChange={e => setNewAptPet(e.target.value)}
+                disabled={!newAptClient}
+              >
+                <option value="">{!newAptClient ? 'Selecione o cliente primeiro' : 'Selecione o pet'}</option>
+                {petsDoCliente.map(pet => (
+                  <option key={pet.id} value={pet.id}>{pet.name}</option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
               <label className="block text-sm font-medium mb-1">Serviços</label>
               {newAptServices.map((service, idx) => (
-                <div key={idx} className="flex gap-2 mb-2">
-                  <input type="text" className="input flex-1" placeholder="Serviço" value={service.name} onChange={e => handleServiceChange(idx, 'name', e.target.value)} />
-                  <input type="number" className="input w-24" placeholder="Preço" value={service.price} onChange={e => handleServiceChange(idx, 'price', e.target.value)} />
+                <div key={idx} className="flex gap-2 mb-2 items-center">
+                  <label htmlFor={`serviceName${idx}`} className="sr-only">Serviço</label>
+                  <select
+                    id={`serviceName${idx}`}
+                    name={`serviceName${idx}`}
+                    className="input flex-1"
+                    value={service.name}
+                    onChange={e => handleServiceChange(idx, 'name', e.target.value)}
+                  >
+                    <option value="">Selecione o serviço</option>
+                    {serviceTypes.map(st => (
+                      <option key={st.id} value={st.name}>{st.name}</option>
+                    ))}
+                  </select>
+                  <label htmlFor={`servicePrice${idx}`} className="sr-only">Preço</label>
+                  <input
+                    id={`servicePrice${idx}`}
+                    name={`servicePrice${idx}`}
+                    type="text"
+                    className="input w-24"
+                    placeholder="Preço"
+                    value={formatCurrencyBRL(service.price)}
+                    onChange={e => {
+                      let raw = e.target.value.replace(/\D/g, '');
+                      if (raw.length > 8) raw = raw.slice(0, 8);
+                      handleServiceChange(idx, 'price', raw);
+                    }}
+                    inputMode="numeric"
+                    autoComplete="off"
+                  />
                   {newAptServices.length > 1 && (
-                    <button type="button" className="btn btn-xs btn-danger" onClick={() => handleRemoveService(idx)}>-</button>
+                    <button type="button" className="btn btn-xs btn-danger" onClick={() => handleRemoveService(idx)} aria-label="Remover serviço">-</button>
                   )}
                 </div>
               ))}

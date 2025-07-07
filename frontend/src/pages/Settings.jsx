@@ -45,16 +45,16 @@ const Settings = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-4 flex-wrap">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Início</label>
-              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="input" required />
+              <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-1">Início</label>
+              <input id="startTime" name="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="input" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fim</label>
-              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="input" required />
+              <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-1">Fim</label>
+              <input id="endTime" name="endTime" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="input" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Intervalo (min)</label>
-              <input type="number" min="5" step="5" value={interval} onChange={e => setInterval(Number(e.target.value))} className="input w-24" required />
+              <label htmlFor="interval" className="block text-sm font-medium text-gray-700 mb-1">Intervalo (min)</label>
+              <input id="interval" name="interval" type="number" min="5" step="5" value={interval} onChange={e => setInterval(Number(e.target.value))} className="input w-24" required />
             </div>
           </div>
           <button type="submit" className="btn btn-primary mt-2">Salvar</button>

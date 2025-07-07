@@ -60,8 +60,10 @@ const Services = () => {
       {/* Formulário de cadastro */}
       <form className="card space-y-4" onSubmit={editId ? handleEditSubmit : handleSubmit}>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Serviço</label>
+          <label htmlFor="serviceName" className="block text-sm font-medium text-gray-700 mb-1">Nome do Serviço</label>
           <input
+            id="serviceName"
+            name="serviceName"
             type="text"
             className="input-field"
             value={editId ? editName : name}
@@ -71,8 +73,10 @@ const Services = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+          <label htmlFor="serviceDesc" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
           <textarea
+            id="serviceDesc"
+            name="serviceDesc"
             className="input-field"
             value={editId ? editDescription : description}
             onChange={e => editId ? setEditDescription(e.target.value) : setDescription(e.target.value)}

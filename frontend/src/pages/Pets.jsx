@@ -241,10 +241,12 @@ const Pets = () => {
       {/* Filtros Avançados */}
       <div className="card flex flex-col md:flex-row md:items-end gap-4">
         <div className="flex-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="speciesFilter" className="block text-sm font-medium text-gray-700 mb-1">
             Espécie
           </label>
           <input
+            id="speciesFilter"
+            name="speciesFilter"
             type="text"
             placeholder="Filtrar por espécie..."
             value={filterSpecies}
@@ -286,10 +288,12 @@ const Pets = () => {
           )}
         </div>
         <div className="flex-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="breedFilter" className="block text-sm font-medium text-gray-700 mb-1">
             Raça
           </label>
           <input
+            id="breedFilter"
+            name="breedFilter"
             type="text"
             placeholder="Filtrar por raça..."
             value={filterBreed}
@@ -331,10 +335,12 @@ const Pets = () => {
           )}
         </div>
         <div className="flex-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="clientFilter" className="block text-sm font-medium text-gray-700 mb-1">
             Dono
           </label>
           <input
+            id="clientFilter"
+            name="clientFilter"
             type="text"
             placeholder="Filtrar por dono..."
             value={clients.find(c => c.id == filterClient)?.name || ''}

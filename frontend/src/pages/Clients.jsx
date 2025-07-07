@@ -134,8 +134,11 @@ const Clients = () => {
       {/* Barra de Busca */}
       <div className="card">
         <div className="relative">
+          <label htmlFor="clientSearch" className="block text-sm font-medium text-gray-700 mb-1">Buscar Cliente</label>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
+            id="clientSearch"
+            name="clientSearch"
             type="text"
             placeholder="Buscar clientes por nome, CPF ou telefone..."
             value={searchQuery}
